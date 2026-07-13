@@ -1,0 +1,397 @@
+/**
+ * inf-mem Popup Styles
+ *
+ * Styling for the extension popup that opens when clicking the inf-mem icon.
+ * Shows memory count, compression toggle, memory list, and management options.
+ * Width: 300px, clean minimal design.
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, sans-serif;
+  font-size: 13px;
+  color: #333;
+  background: white;
+}
+
+.inf-mem-popup {
+  width: 300px;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+/* Header section */
+.inf-mem-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inf-mem-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.inf-mem-emoji {
+  font-size: 16px;
+}
+
+/* Status indicator */
+.inf-mem-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.inf-mem-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #d1d5db;
+  animation: pulse-status 2s infinite;
+}
+
+.inf-mem-status-dot.online {
+  background-color: #10b981;
+}
+
+.inf-mem-status-dot.offline {
+  background-color: #ef4444;
+  animation: none;
+}
+
+@keyframes pulse-status {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.inf-mem-status-text {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Stats section */
+.inf-mem-stats {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inf-mem-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inf-mem-stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.inf-mem-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Settings section */
+.inf-mem-settings {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inf-mem-setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inf-mem-setting-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Toggle switch */
+.inf-mem-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.inf-mem-toggle-input {
+  display: none;
+}
+
+.inf-mem-toggle-slider {
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  background-color: #d1d5db;
+  border-radius: 10px;
+  position: relative;
+  transition: background-color 0.3s;
+}
+
+.inf-mem-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: white;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.inf-mem-toggle-input:checked + .inf-mem-toggle-slider {
+  background-color: #3b82f6;
+}
+
+.inf-mem-toggle-input:checked + .inf-mem-toggle-slider::before {
+  left: 18px;
+}
+
+/* Memories container */
+.inf-mem-memories-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.inf-mem-memories-title {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.inf-mem-memories-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 12px 12px;
+}
+
+/* Empty state */
+.inf-mem-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: #9ca3af;
+}
+
+.inf-mem-empty-icon {
+  font-size: 32px;
+}
+
+.inf-mem-empty-text {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.inf-mem-empty-desc {
+  font-size: 11px;
+  color: #d1d5db;
+}
+
+/* Memory card */
+.inf-mem-memory-card {
+  padding: 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+  transition: all 0.2s;
+}
+
+.inf-mem-memory-card:hover {
+  background: #f3f4f6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.inf-mem-memory-card.type-fact {
+  border-left-color: #3b82f6;
+}
+
+.inf-mem-memory-card.type-project {
+  border-left-color: #10b981;
+}
+
+.inf-mem-memory-card.type-preference {
+  border-left-color: #a855f7;
+}
+
+.inf-mem-memory-card.type-episode {
+  border-left-color: #f97316;
+}
+
+/* Memory card header */
+.inf-mem-memory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.inf-mem-memory-type {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+}
+
+.inf-mem-memory-type.fact {
+  background-color: #3b82f6;
+}
+
+.inf-mem-memory-type.project {
+  background-color: #10b981;
+}
+
+.inf-mem-memory-type.preference {
+  background-color: #a855f7;
+}
+
+.inf-mem-memory-type.episode {
+  background-color: #f97316;
+}
+
+.inf-mem-delete-btn {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  transition: color 0.2s;
+}
+
+.inf-mem-delete-btn:hover {
+  color: #ef4444;
+}
+
+/* Memory card text */
+.inf-mem-memory-text {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #374151;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+/* Importance dots */
+.inf-mem-importance-dots {
+  display: flex;
+  gap: 2px;
+}
+
+.inf-mem-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #d1d5db;
+}
+
+.inf-mem-dot.filled {
+  background-color: #3b82f6;
+}
+
+/* Footer section */
+.inf-mem-popup-footer {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.inf-mem-clear-btn {
+  padding: 8px 12px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-family: inherit;
+}
+
+.inf-mem-clear-btn:hover {
+  background-color: #dc2626;
+}
+
+.inf-mem-clear-btn:active {
+  transform: scale(0.98);
+}
+
+.inf-mem-footer-message {
+  font-size: 11px;
+  color: #9ca3af;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Scrollbar styling */
+.inf-mem-memories-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inf-mem-memories-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inf-mem-memories-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.inf-mem-memories-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

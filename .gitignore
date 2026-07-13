@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Config (contains API keys — NEVER commit this)
+config.yaml
+
+# Memory data (personal data, stored locally)
+~/.inf_mem/
+*.db
+*.npy
+
+# Process files
+.backend.pid
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# fastembed model cache
+.cache/

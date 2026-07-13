@@ -1,0 +1,15 @@
+# API server
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+
+# Groq API client (OpenAI-compatible SDK)
+openai>=1.12.0
+
+# Embeddings — fastembed uses ONNX Runtime (no PyTorch/GPU required, ~130MB first download)
+fastembed>=0.2.0
+
+# Utilities
+numpy>=1.24.0
+pyyaml>=6.0
+socksio>=1.0.0   # required if running behind a SOCKS proxy

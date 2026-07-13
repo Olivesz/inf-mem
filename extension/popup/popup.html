@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="inf-mem-popup">
+      <!-- Header with title and status -->
+      <div class="inf-mem-popup-header">
+        <div class="inf-mem-popup-title">
+          <span class="inf-mem-emoji">🧠</span>
+          <span>inf-mem</span>
+        </div>
+        <div class="inf-mem-status">
+          <div class="inf-mem-status-dot" id="statusDot"></div>
+          <span class="inf-mem-status-text" id="statusText">Connecting...</span>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="inf-mem-stats">
+        <div class="inf-mem-stat">
+          <span class="inf-mem-stat-label">Memories</span>
+          <span class="inf-mem-stat-value" id="memoryCount">0</span>
+        </div>
+        <div class="inf-mem-stat">
+          <span class="inf-mem-stat-label">Last Updated</span>
+          <span class="inf-mem-stat-value" id="lastUpdated">—</span>
+        </div>
+      </div>
+
+      <!-- Settings section -->
+      <div class="inf-mem-settings">
+        <div class="inf-mem-setting-item">
+          <label class="inf-mem-setting-label">Prompt Compression</label>
+          <label class="inf-mem-toggle">
+            <input
+              type="checkbox"
+              id="compressionToggle"
+              class="inf-mem-toggle-input"
+            />
+            <span class="inf-mem-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Memory list -->
+      <div class="inf-mem-memories-container">
+        <div class="inf-mem-memories-title">All Memories</div>
+        <div class="inf-mem-memories-list" id="memoriesList">
+          <div class="inf-mem-empty-state">
+            <div class="inf-mem-empty-icon">📭</div>
+            <div class="inf-mem-empty-text">No memories yet</div>
+            <div class="inf-mem-empty-desc">Memories will appear as you chat</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="inf-mem-popup-footer">
+        <button class="inf-mem-clear-btn" id="clearAllBtn">Clear all memories</button>
+        <div class="inf-mem-footer-message" id="footerMessage"></div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

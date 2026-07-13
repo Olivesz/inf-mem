@@ -1,0 +1,277 @@
+/**
+ * inf-mem Memory Review Panel Styles
+ *
+ * Styling for the review panel that slides in from the right side of the screen,
+ * showing retrieved memories, compression preview, and action buttons.
+ */
+
+/* Panel container and positioning */
+.inf-mem-panel {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) translateX(100%);
+  width: 320px;
+  max-height: 70vh;
+  background: white;
+  border-radius: 12px 0 0 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  z-index: 999999;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+    Cantarell, sans-serif;
+  font-size: 14px;
+  color: #333;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inf-mem-panel.visible {
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Panel content wrapper */
+.inf-mem-panel-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Header section */
+.inf-mem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.inf-mem-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1f2937;
+}
+
+.inf-mem-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.inf-mem-close-btn:hover {
+  color: #4b5563;
+}
+
+/* Section container */
+.inf-mem-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.inf-mem-section:last-of-type {
+  border-bottom: none;
+}
+
+.inf-mem-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* Memory list */
+.inf-mem-memory-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Memory item styling */
+.inf-mem-memory-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.inf-mem-type-badge {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Type-specific colors */
+.inf-mem-type-fact .inf-mem-type-badge {
+  background-color: #3b82f6;
+}
+
+.inf-mem-type-project .inf-mem-type-badge {
+  background-color: #10b981;
+}
+
+.inf-mem-type-preference .inf-mem-type-badge {
+  background-color: #a855f7;
+}
+
+.inf-mem-type-episode .inf-mem-type-badge {
+  background-color: #f97316;
+}
+
+.inf-mem-type-unknown .inf-mem-type-badge {
+  background-color: #6b7280;
+}
+
+.inf-mem-text {
+  flex: 1;
+  word-break: break-word;
+  color: #374151;
+}
+
+/* Compression preview */
+.inf-mem-compressed-preview {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  max-height: 100px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+/* Buttons section */
+.inf-mem-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background: #fafbfc;
+}
+
+.inf-mem-btn {
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+/* Primary button (Send with memory) */
+.inf-mem-btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.inf-mem-btn-primary:hover {
+  background-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.inf-mem-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Secondary button (Skip memory) */
+.inf-mem-btn-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+
+.inf-mem-btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+.inf-mem-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Tertiary button (Compress & Send) */
+.inf-mem-btn-tertiary {
+  background-color: #06b6d4;
+  color: white;
+}
+
+.inf-mem-btn-tertiary:hover {
+  background-color: #0891b2;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+}
+
+.inf-mem-btn-tertiary:active {
+  transform: scale(0.98);
+}
+
+/* Scrollbar styling for lists */
+.inf-mem-memory-list::-webkit-scrollbar,
+.inf-mem-compressed-preview::-webkit-scrollbar {
+  width: 6px;
+}
+
+.inf-mem-memory-list::-webkit-scrollbar-track,
+.inf-mem-compressed-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inf-mem-memory-list::-webkit-scrollbar-thumb,
+.inf-mem-compressed-preview::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.inf-mem-memory-list::-webkit-scrollbar-thumb:hover,
+.inf-mem-compressed-preview::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .inf-mem-panel {
+    width: 280px;
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .inf-mem-panel {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px 12px 0 0;
+    top: auto;
+    bottom: 0;
+    transform: translateY(100%);
+  }
+
+  .inf-mem-panel.visible {
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "manifest_version": 3,
+  "name": "inf-mem",
+  "version": "0.1.0",
+  "description": "Persistent memory layer for LLMs — context that never forgets",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": [
+        "content/shared.js",
+        "content/chatgpt.js"
+      ],
+      "css": [
+        "panel/panel.css"
+      ]
+    },
+    {
+      "matches": [
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "content/shared.js",
+        "content/claude.js"
+      ],
+      "css": [
+        "panel/panel.css"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "panel/panel.html",
+        "panel/panel.css",
+        "panel/panel.js"
+      ],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*"
+      ]
+    }
+  ]
+}
