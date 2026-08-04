@@ -28,6 +28,11 @@ After response arrives → Groq extracts new memories → stored locally
 
 Memory persists across every conversation, forever, entirely on your machine.
 
+<p align="center">
+  <img src="docs/popup.png" width="420" alt="The extension popup connected to the running local backend — live status, memory count, and typed memory cards">
+</p>
+<p align="center"><sub>The popup against the running local backend: live health status, real memory count, and typed memory cards served by the semantic store.</sub></p>
+
 ---
 
 ## Memory types
