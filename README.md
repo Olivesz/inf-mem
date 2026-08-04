@@ -1,6 +1,6 @@
 # inf-mem
 
-[![CI](https://github.com/oliverzhang/inf-mem/actions/workflows/ci.yml/badge.svg)](https://github.com/oliverzhang/inf-mem/actions/workflows/ci.yml)
+[![CI](https://github.com/Olivesz/inf-mem/actions/workflows/ci.yml/badge.svg)](https://github.com/Olivesz/inf-mem/actions/workflows/ci.yml)
 
 A persistent memory layer for LLMs. Runs locally on your machine and works across ChatGPT and Claude — context that actually sticks.
 
