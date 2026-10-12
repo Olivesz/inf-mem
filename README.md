@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Olivesz/inf-mem/actions/workflows/ci.yml/badge.svg)](https://github.com/Olivesz/inf-mem/actions/workflows/ci.yml)
 
-A persistent memory layer for LLMs. Runs locally on your machine and works across ChatGPT and Claude — context that actually sticks.
+A persistent memory layer for LLMs. Stores and searches memories locally; extraction and compression call Groq (llama-3.1-8b-instant). Works across ChatGPT and Claude — context that actually sticks.
 
 ---
 
