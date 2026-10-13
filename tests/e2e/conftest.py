@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from harness import EXTENSION
+from harness import EXTENSION, extension_worker
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def launch_extension(tmp_path):
             str(tmp_path / f"profile{len(contexts)}"), channel="chromium", headless=True,
             args=[f"--disable-extensions-except={EXTENSION}", f"--load-extension={EXTENSION}"])
         contexts.append(ctx)
-        worker = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
+        worker = extension_worker(ctx)
         worker.evaluate(f"chrome.storage.sync.set({{backendUrl: '{backend_url}', userId: 'default'}})")
         return ctx, worker.url.split("/")[2]
 

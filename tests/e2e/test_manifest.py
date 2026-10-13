@@ -11,7 +11,7 @@ import json
 import shutil
 
 import pytest
-from harness import EXTENSION
+from harness import EXTENSION, extension_worker
 
 pytestmark = pytest.mark.e2e
 
@@ -24,7 +24,7 @@ def problems(ext, profile) -> dict:
             str(profile), channel="chromium", headless=True,
             args=[f"--disable-extensions-except={ext}", f"--load-extension={ext}"])
         try:
-            worker = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
+            worker = extension_worker(ctx)
             ext_id = worker.url.split("/")[2]
             page = ctx.new_page()
             page.goto("chrome://extensions/")

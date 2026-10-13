@@ -17,7 +17,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "backend"), str(ROOT / "tests" / "e2e")]
 
-from harness import EXTENSION, seed, start_backend
+from harness import EXTENSION, extension_worker, seed, start_backend
 from playwright.sync_api import sync_playwright
 
 DEMO = [
@@ -40,7 +40,7 @@ def main() -> None:
                 str(home / "profile"), channel="chromium", headless=True, device_scale_factor=2,
                 viewport={"width": WIDTH, "height": 600},
                 args=[f"--disable-extensions-except={EXTENSION}", f"--load-extension={EXTENSION}"])
-            worker = ctx.service_workers[0] if ctx.service_workers else ctx.wait_for_event("serviceworker")
+            worker = extension_worker(ctx)
             worker.evaluate(f"chrome.storage.sync.set({{backendUrl: '{url}'}})")
             page = ctx.new_page()
             page.goto(f"chrome-extension://{worker.url.split('/')[2]}/popup/popup.html")

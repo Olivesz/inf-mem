@@ -100,3 +100,24 @@ def seed(home: Path, items: list, vectors) -> None:
     store = MemoryStore(data_dir=home / ".inf_mem")
     mems = [Memory(id=str(uuid4()), text=t, type=MemoryType(k), importance=i) for t, k, i in items]
     store.add_many(mems, vectors)
+
+
+def extension_worker(ctx):
+    """inf-mem's service worker, once its extension APIs are bound.
+
+    Right after launch the worker can exist before chrome.storage does.
+    """
+    def ours():
+        return [w for w in ctx.service_workers if w.url.endswith("/background.js")]
+
+    deadline = time.monotonic() + 15
+    while not ours():
+        if time.monotonic() > deadline:
+            raise RuntimeError("extension service worker never started")
+        ctx.wait_for_event("serviceworker", timeout=15000)
+    worker = ours()[0]
+    while not worker.evaluate("typeof chrome !== 'undefined' && !!chrome.storage && !!chrome.storage.sync"):
+        if time.monotonic() > deadline:
+            raise RuntimeError("chrome.storage never became available in the service worker")
+        time.sleep(0.1)
+    return worker

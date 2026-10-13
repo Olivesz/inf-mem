@@ -1,10 +1,12 @@
 """
 Compare recomputed eval results with the committed file.
 
-Embeddings come from ONNX Runtime, whose float output can differ in the last
-bits across CPUs, so numbers are compared within TOL rather than byte for
-byte. TOL is below the 0.005 sweep step, so a calibrated threshold that moves
-still fails the check.
+Embeddings come from a quantized ONNX model whose output differs slightly
+between CPU architectures, so a question whose score sits on a threshold can
+fall on either side. Rates are compared within TOL, which allows three such
+questions in a 760-question half (3/760 = 0.0039; CI's x86 runner flipped two
+against the ARM results). TOL stays below the 0.005 sweep step, so a threshold
+that moves still fails.
 """
 
 from __future__ import annotations
@@ -12,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-TOL = 0.002
+TOL = 0.004
 
 
 def diffs(a, b, path="") -> list:
