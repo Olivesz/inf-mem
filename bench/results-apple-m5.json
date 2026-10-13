@@ -5,7 +5,7 @@
     "arch": "arm64",
     "python": "3.12.13",
     "cpu_count": 10,
-    "load_avg_1m_at_start": 4.51
+    "load_avg_1m_at_start": 4.9
   },
   "date": "2026-10-13",
   "method": "TestClient, real model and store; 200 /retrieve and 50 /extract per size after 10 warm-up calls; Groq stubbed with a fixed 2-fact reply",
@@ -13,39 +13,39 @@
     {
       "memories": 100,
       "retrieve": {
-        "p50_ms": 6.41,
-        "p95_ms": 7.27,
+        "p50_ms": 5.99,
+        "p95_ms": 6.94,
         "n": 200
       },
       "extract": {
-        "p50_ms": 10.08,
-        "p95_ms": 10.88,
+        "p50_ms": 9.86,
+        "p95_ms": 10.46,
         "n": 50
       }
     },
     {
       "memories": 1000,
       "retrieve": {
-        "p50_ms": 6.77,
-        "p95_ms": 7.55,
+        "p50_ms": 6.67,
+        "p95_ms": 7.76,
         "n": 200
       },
       "extract": {
-        "p50_ms": 10.12,
-        "p95_ms": 10.97,
+        "p50_ms": 10.94,
+        "p95_ms": 13.02,
         "n": 50
       }
     },
     {
       "memories": 10000,
       "retrieve": {
-        "p50_ms": 7.89,
-        "p95_ms": 9.06,
+        "p50_ms": 6.86,
+        "p95_ms": 7.52,
         "n": 200
       },
       "extract": {
-        "p50_ms": 12.42,
-        "p95_ms": 14.49,
+        "p50_ms": 10.54,
+        "p95_ms": 11.4,
         "n": 50
       }
     }

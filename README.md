@@ -40,9 +40,9 @@ If nothing passes the gate, the prompt goes out unchanged and no panel appears.
 
 | Machine | Memories | /retrieve p50 / p95 | /extract p50 / p95 |
 |---|---|---|---|
-| Apple M5 | 100 | 6 / 7 ms | 10 / 11 ms |
-| Apple M5 | 1,000 | 7 / 8 ms | 10 / 11 ms |
-| Apple M5 | 10,000 | 8 / 9 ms | 12 / 14 ms |
+| Apple M5 | 100 | 6 / 7 ms | 10 / 10 ms |
+| Apple M5 | 1,000 | 7 / 8 ms | 11 / 13 ms |
+| Apple M5 | 10,000 | 7 / 8 ms | 11 / 11 ms |
 | AMD EPYC 7763 64-Core Processor | 100 | 11 / 13 ms | 19 / 24 ms |
 | AMD EPYC 7763 64-Core Processor | 1,000 | 14 / 17 ms | 24 / 25 ms |
 | AMD EPYC 7763 64-Core Processor | 10,000 | 82 / 101 ms | 172 / 183 ms |

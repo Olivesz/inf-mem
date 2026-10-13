@@ -106,16 +106,38 @@ class MemoryStore:
         ).fetchall()
         conn.close()
         self.memory_ids: list[str] = [r[0] for r in rows]
-        self._users: list[str] = [r[1] for r in rows]
+        # Users are stored as small integer codes so filtering by user is a
+        # vectorised compare; per-user counts let a single-user store skip it.
+        self._code: dict[str, int] = {}
+        self._users: list[str] = []
+        self._count: dict[str, int] = {}
         cap = max(16, len(rows))
         self._buf = np.zeros((cap, DIM), dtype=np.float32)
         self._imp = np.zeros(cap, dtype=np.float32)
+        self._ucode = np.zeros(cap, dtype=np.int32)
         for i, r in enumerate(rows):
+            self._ucode[i] = self._user_code(r[1])
+            self._count[r[1]] = self._count.get(r[1], 0) + 1
             self._buf[i] = np.frombuffer(r[2], dtype=np.float32)
             self._imp[i] = r[3]
         self._norms = np.linalg.norm(self._buf, axis=1)
         self._row = {mid: i for i, mid in enumerate(self.memory_ids)}
-        self._users_np = None
+
+    def _user_code(self, user_id: str) -> int:
+        if user_id not in self._code:
+            self._code[user_id] = len(self._users)
+            self._users.append(user_id)
+        return self._code[user_id]
+
+    def _rows_for(self, user_id: str):
+        """A slice (one user owns every row) or an index array of the user's rows."""
+        n = len(self.memory_ids)
+        count = self._count.get(user_id, 0)
+        if count == 0:
+            return np.zeros(0, dtype=np.intp)
+        if count == n:
+            return slice(0, n)
+        return np.flatnonzero(self._ucode[:n] == self._code[user_id])
 
     @property
     def embeddings(self) -> np.ndarray:
@@ -129,14 +151,16 @@ class MemoryStore:
             self._buf = _grow(self._buf, cap, n)
             self._norms = _grow(self._norms, cap, n)
             self._imp = _grow(self._imp, cap, n)
+            self._ucode = _grow(self._ucode, cap, n)
         self._buf[n: n + k] = vectors
         self._norms[n: n + k] = np.linalg.norm(vectors, axis=1)
         self._imp[n: n + k] = importance
+        for offset, user in enumerate(users):
+            self._ucode[n + offset] = self._user_code(user)
+            self._count[user] = self._count.get(user, 0) + 1
         for offset, (mid, user) in enumerate(zip(ids, users, strict=True)):
             self._row[mid] = n + offset
         self.memory_ids.extend(ids)
-        self._users.extend(users)
-        self._users_np = None
 
     def _drop_rows(self, rows: list[int]) -> None:
         keep = np.setdiff1d(np.arange(len(self.memory_ids)), rows)
@@ -144,10 +168,12 @@ class MemoryStore:
         self._buf[:n] = self._buf[keep]
         self._norms[:n] = self._norms[keep]
         self._imp[:n] = self._imp[keep]
+        removed = np.bincount(self._ucode[np.asarray(rows, dtype=np.intp)], minlength=len(self._users))
+        for code in np.flatnonzero(removed):
+            self._count[self._users[code]] -= int(removed[code])
+        self._ucode[:n] = self._ucode[keep]
         self.memory_ids = [self.memory_ids[i] for i in keep]
-        self._users = [self._users[i] for i in keep]
         self._row = {mid: i for i, mid in enumerate(self.memory_ids)}
-        self._users_np = None
 
     # ------------------------------------------------------------------ #
     # writes: each one touches only its own rows
@@ -242,7 +268,8 @@ class MemoryStore:
         Returns:
             Number of memories deleted
         """
-        rows = [i for i, u in enumerate(self._users) if u == user_id]
+        sel = self._rows_for(user_id)
+        rows = list(range(sel.stop)) if isinstance(sel, slice) else sel.tolist()
         conn = self._connect()
         conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
         conn.commit()
@@ -374,11 +401,11 @@ class MemoryStore:
         Returns:
             (ids, matrix) where matrix has shape (len(ids), 384)
         """
-        rows = np.flatnonzero(self._user_array() == user_id)
-        if len(rows) == len(self.memory_ids):
+        sel = self._rows_for(user_id)
+        if isinstance(sel, slice):
             # One user owns every row (the usual case): a view, no copy.
             return list(self.memory_ids), self.embeddings
-        return [self.memory_ids[i] for i in rows], self.embeddings[rows]
+        return [self.memory_ids[i] for i in sel], self.embeddings[sel]
 
     def search(self, user_id: str, query: np.ndarray) -> tuple[list[str], np.ndarray, np.ndarray]:
         """
@@ -390,20 +417,13 @@ class MemoryStore:
         Returns:
             (ids, cosines, importance), aligned
         """
-        rows = np.flatnonzero(self._user_array() == user_id)
-        n = len(self.memory_ids)
-        sel = slice(0, n) if len(rows) == n else rows
-        ids = list(self.memory_ids) if len(rows) == n else [self.memory_ids[i] for i in rows]
+        sel = self._rows_for(user_id)
+        ids = list(self.memory_ids) if isinstance(sel, slice) else [self.memory_ids[i] for i in sel]
         qn = float(np.linalg.norm(query))
         dots = self._buf[sel] @ query
         denom = self._norms[sel] * qn
         sims = np.divide(dots, denom, out=np.zeros_like(dots), where=denom > 0)
         return ids, sims, self._imp[sel].copy()
-
-    def _user_array(self) -> np.ndarray:
-        if self._users_np is None or len(self._users_np) != len(self._users):
-            self._users_np = np.array(self._users, dtype=object)
-        return self._users_np
 
     def get_many(self, memory_ids: list[str]) -> list[Memory]:
         """Fetch several memories in one query (order not guaranteed)."""

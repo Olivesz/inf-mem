@@ -308,3 +308,41 @@ def test_importance_update_changes_ranking(store, monkeypatch):
     assert [m.id for m in retriever.retrieve("q", store, "u1", threshold=0.5)] == [b.id, a.id]
     store.update_memory(a.id, "a", [], 9, base)
     assert [m.id for m in retriever.retrieve("q", store, "u1", threshold=0.5)] == [a.id, b.id]
+
+
+def test_mixed_writes_match_a_plain_model(tmp_path):
+    """600 random adds, deletes, updates and clears across three users: every
+    user's rows match a dict model, before and after reopening the store."""
+    import random
+
+    rng, nrng = random.Random(0), np.random.default_rng(0)
+    store = MemoryStore(data_dir=tmp_path)
+    model: dict = {}
+    users = ["a", "b", "c"]
+    for step in range(600):
+        op = rng.random()
+        if op < 0.6 or not model:
+            m = Memory(id=str(uuid4()), user_id=rng.choice(users), text="x", type=MemoryType.FACT)
+            v = nrng.standard_normal(384).astype(np.float32)
+            store.add_memory(m, v)
+            model[m.id] = (m.user_id, v)
+        elif op < 0.8:
+            mid = rng.choice(list(model))
+            store.delete_memory(mid)
+            del model[mid]
+        elif op < 0.95:
+            mid = rng.choice(list(model))
+            v = nrng.standard_normal(384).astype(np.float32)
+            store.update_memory(mid, "y", [], 5, v)
+            model[mid] = (model[mid][0], v)
+        else:
+            u = rng.choice(users)
+            store.delete_all(u)
+            model = {k: x for k, x in model.items() if x[0] != u}
+        if step % 50 == 0 or step == 599:
+            for s in (store, MemoryStore(data_dir=tmp_path)):
+                for u in users:
+                    ids, matrix = s.get_user_vectors(u)
+                    assert set(ids) == {k for k, x in model.items() if x[0] == u}
+                    for k, row in zip(ids, matrix, strict=True):
+                        assert np.allclose(row, model[k][1])
