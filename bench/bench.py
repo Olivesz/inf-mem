@@ -89,7 +89,7 @@ def fill(store, texts: list, vec: dict, n: int) -> None:
     store.add_many(mems, np.stack([vec[t] for t in picked]))
 
 
-def run_size(n: int, texts: list, vec: dict, queries: list) -> dict:
+def run_size(n: int, texts: list, vec: dict, queries: list, profile: bool = False) -> dict:
     with tempfile.TemporaryDirectory() as home:
         old_home = Path.home
         Path.home = staticmethod(lambda: Path(home))
@@ -108,6 +108,10 @@ def run_size(n: int, texts: list, vec: dict, queries: list) -> dict:
                         times.append(dt)
                 retrieve = pct(times)
 
+                prof = None
+                if profile:
+                    import cProfile
+                    prof = cProfile.Profile()
                 times = []
                 for i in range(WARMUP + EXTRACT_N):
                     reply = json.dumps([
@@ -117,6 +121,8 @@ def run_size(n: int, texts: list, vec: dict, queries: list) -> dict:
                          "type": "PROJECT", "importance": 5},
                     ])
                     main.groq_client = FakeGroq(reply)
+                    if prof and i == WARMUP:
+                        prof.enable()
                     t0 = time.perf_counter()
                     r = client.post("/extract", json={"prompt": f"turn {i}", "response": "ok"})
                     dt = time.perf_counter() - t0
@@ -124,6 +130,14 @@ def run_size(n: int, texts: list, vec: dict, queries: list) -> dict:
                     if i >= WARMUP:
                         times.append(dt)
                 extract = pct(times)
+                if prof:
+                    import io
+                    import pstats
+                    prof.disable()
+                    out = io.StringIO()
+                    pstats.Stats(prof, stream=out).sort_stats("tottime").print_stats(15)
+                    print(f"--- /extract profile at {n} memories (by own time) ---")
+                    print(out.getvalue())
         finally:
             Path.home = old_home
     return {"memories": n, "retrieve": retrieve, "extract": extract}
@@ -168,6 +182,7 @@ def main_() -> int:
     ap.add_argument("--out", type=Path)
     ap.add_argument("--compare", type=Path)
     ap.add_argument("--scaling", action="store_true", help="fail if /extract slows with store size")
+    ap.add_argument("--profile", action="store_true", help="print a /extract profile at the largest size")
     args = ap.parse_args()
 
     texts, vec, queries = corpus()
@@ -179,7 +194,7 @@ def main_() -> int:
         "results": [],
     }
     for n in args.sizes:
-        r = run_size(n, texts, vec, queries)
+        r = run_size(n, texts, vec, queries, profile=args.profile and n == max(args.sizes))
         print(json.dumps(r))
         result["results"].append(r)
 

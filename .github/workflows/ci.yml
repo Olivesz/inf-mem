@@ -106,7 +106,7 @@ jobs:
           key: locomo-79fa87e90f04
 
       - name: Bench; compare p95 with the CI baseline; /extract must not slow with store size
-        run: python bench/bench.py --sizes 100 1000 10000 --out bench-ci.json --compare bench/results-ci.json --scaling
+        run: python bench/bench.py --sizes 100 1000 10000 --out bench-ci.json --compare bench/results-ci.json --scaling --profile
 
       - uses: actions/upload-artifact@v4
         with:
