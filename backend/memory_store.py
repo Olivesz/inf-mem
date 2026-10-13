@@ -420,7 +420,10 @@ class MemoryStore:
         sel = self._rows_for(user_id)
         ids = list(self.memory_ids) if isinstance(sel, slice) else [self.memory_ids[i] for i in sel]
         qn = float(np.linalg.norm(query))
-        dots = self._buf[sel] @ query
+        # einsum's plain C loop, not BLAS: on Linux, OpenBLAS goes multithreaded
+        # for a 10k-row product and its spinning threads starve the ONNX
+        # embedding running in the same request (bench --profile on CI).
+        dots = np.einsum("ij,j->i", self._buf[sel], query.astype(np.float32))
         denom = self._norms[sel] * qn
         sims = np.divide(dots, denom, out=np.zeros_like(dots), where=denom > 0)
         return ids, sims, self._imp[sel].copy()
