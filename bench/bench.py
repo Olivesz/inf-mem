@@ -108,10 +108,6 @@ def run_size(n: int, texts: list, vec: dict, queries: list, profile: bool = Fals
                         times.append(dt)
                 retrieve = pct(times)
 
-                prof = None
-                if profile:
-                    import cProfile
-                    prof = cProfile.Profile()
                 times = []
                 for i in range(WARMUP + EXTRACT_N):
                     reply = json.dumps([
@@ -121,8 +117,6 @@ def run_size(n: int, texts: list, vec: dict, queries: list, profile: bool = Fals
                          "type": "PROJECT", "importance": 5},
                     ])
                     main.groq_client = FakeGroq(reply)
-                    if prof and i == WARMUP:
-                        prof.enable()
                     t0 = time.perf_counter()
                     r = client.post("/extract", json={"prompt": f"turn {i}", "response": "ok"})
                     dt = time.perf_counter() - t0
@@ -130,10 +124,19 @@ def run_size(n: int, texts: list, vec: dict, queries: list, profile: bool = Fals
                     if i >= WARMUP:
                         times.append(dt)
                 extract = pct(times)
-                if prof:
+                if profile:
+                    # A separate, untimed pass: the profiler slows calls down,
+                    # so it must never run while latencies are being recorded.
+                    import cProfile
                     import io
                     import pstats
-                    prof.disable()
+                    prof = cProfile.Profile()
+                    for i in range(EXTRACT_N):
+                        main.groq_client = FakeGroq(json.dumps([
+                            {"text": f"User profiled fact number {i}", "type": "FACT", "importance": 4}]))
+                        prof.enable()
+                        client.post("/extract", json={"prompt": f"profile {i}", "response": "ok"})
+                        prof.disable()
                     out = io.StringIO()
                     pstats.Stats(prof, stream=out).sort_stats("tottime").print_stats(15)
                     print(f"--- /extract profile at {n} memories (by own time) ---")
