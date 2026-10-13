@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -204,13 +205,57 @@ def run() -> dict:
     }
 
 
+def check(result: dict) -> int:
+    """
+    Compare a fresh run with the committed results.
+
+    The embedding model is quantized ONNX, whose output differs slightly
+    between CPU architectures. On the calibration half the best and second-best
+    thresholds are one question apart (0.61 vs 0.605 here), so on another CPU
+    the argmax can move one 0.005 step. The committed choice is a decision, not
+    a measurement: this check requires that it is still optimal on this
+    machine (its J within compare.TOL of the best J), and that every other
+    number matches within compare.TOL.
+    """
+    committed = json.loads(RESULTS.read_text())
+    cal = result["calibration_split"]
+    variant, chosen = committed["calibration_split"]["chosen_variant"], committed["calibration_split"]["chosen_threshold"]
+    problems = []
+    best_here = {n: v["best"]["j"] for n, v in cal["variants"].items()}
+    if max(best_here, key=best_here.get) != variant and best_here[variant] < max(best_here.values()) - compare.TOL:
+        problems.append(f"query variant {variant} is no longer best here: {best_here}")
+    sweep = cal["variants"][variant]["sweep"]
+    at_chosen = next(r for r in sweep if abs(r["threshold"] - chosen) < 1e-9)
+    print(f"shipped {chosen}: J {at_chosen['j']} here; best here {cal['variants'][variant]['best']}")
+    if at_chosen["j"] < best_here[variant] - compare.TOL:
+        problems.append(f"shipped threshold {chosen} has J {at_chosen['j']}, best here is {best_here[variant]}")
+
+    def strip(d: dict) -> dict:
+        d = json.loads(json.dumps(d))
+        d["calibration_split"].pop("chosen_threshold")
+        for v in d["calibration_split"]["variants"].values():
+            v.pop("best")
+        return d
+
+    problems += compare.diffs(strip(committed), strip(result))
+    out = Path(os.environ.get("RECOMPUTED_OUT", "")) if os.environ.get("RECOMPUTED_OUT") else None
+    if out:
+        out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    if problems:
+        print(f"MISMATCH with {RESULTS.name}:")
+        print("\n".join(problems[:20]))
+        return 1
+    print(f"match: {RESULTS.name}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="compare with the committed results")
     args = ap.parse_args()
     result = run()
     if args.check:
-        return compare.check(RESULTS, result)
+        return check(result)
     RESULTS.parent.mkdir(parents=True, exist_ok=True)
     RESULTS.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     c = result["calibration_split"]

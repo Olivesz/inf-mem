@@ -72,9 +72,17 @@ jobs:
         run: pytest -q -m model
 
       - name: Recompute calibration from scratch and compare with committed results
+        env:
+          RECOMPUTED_OUT: retrieval-recomputed.json
         run: |
           python eval/retrieval.py --check
           python eval/dedupe.py --check
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-recomputed
+          path: retrieval-recomputed.json
 
   bench:
     name: latency bench (1k memories)

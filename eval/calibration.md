@@ -51,6 +51,14 @@ instruction (`Represent this sentence for searching relevant passages: `).
 With the instruction, J was 0.712 at 0.61; without it, 0.688 at 0.63. The
 instruction won, and the retriever uses it.
 
+**Across CPUs.** The embedding model is quantized ONNX, and its output
+differs slightly between ARM (where the calibration was run) and x86 (CI).
+Here J is 0.7118 at 0.61 and 0.7105 at 0.605, one question apart. On CI's x86
+runner one question flips the other way, and the argmax lands on 0.605. So
+CI does not require the argmax to match. It requires the shipped 0.61 to
+stay optimal within 0.002 of J on its own machine, and every other number to
+match within 0.002. CI uploads its recomputed file as an artifact.
+
 **Result on the evaluation half** (`results/locomo-retrieval.json`,
 observations store, 1,331 memories, 776 questions):
 
