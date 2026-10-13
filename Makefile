@@ -135,7 +135,7 @@ memories:
 clear:
 	@echo "WARNING: This will delete all stored memories from ~/.inf_mem/"
 	@read -p "Are you sure? (yes/no): " confirm && [ "$$confirm" = "yes" ] \
-		&& rm -f ~/.inf_mem/memories.db ~/.inf_mem/embeddings.npy ~/.inf_mem/memory_ids.npy \
+		&& rm -f ~/.inf_mem/memories.db ~/.inf_mem/*.npy ~/.inf_mem/*.npy.migrated \
 		&& echo "All memories cleared." \
 		|| echo "Cancelled."
 

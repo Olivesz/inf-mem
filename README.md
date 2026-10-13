@@ -40,9 +40,9 @@ If nothing passes the gate, the prompt goes out unchanged and no panel appears.
 
 | Machine | Memories | /retrieve p50 / p95 | /extract p50 / p95 |
 |---|---|---|---|
-| Apple M5 | 100 | 15 / 38 ms | 27 / 58 ms |
-| Apple M5 | 1,000 | 19 / 48 ms | 28 / 99 ms |
-| Apple M5 | 10,000 | 45 / 84 ms | 90 / 150 ms |
+| Apple M5 | 100 | 9 / 14 ms | 14 / 16 ms |
+| Apple M5 | 1,000 | 12 / 14 ms | 17 / 36 ms |
+| Apple M5 | 10,000 | 16 / 40 ms | 24 / 30 ms |
 | AMD EPYC 7763 64-Core Processor | 100 | 11 / 13 ms | 19 / 24 ms |
 | AMD EPYC 7763 64-Core Processor | 1,000 | 14 / 17 ms | 24 / 25 ms |
 | AMD EPYC 7763 64-Core Processor | 10,000 | 82 / 101 ms | 172 / 183 ms |
@@ -81,7 +81,7 @@ Then open `chrome://extensions`, turn on Developer mode, click **Load unpacked**
 | Unit + API | `make test` | Every endpoint through FastAPI's TestClient, CORS, the store, the extractor; Groq is mocked at the HTTP layer |
 | Real model | `make test-model` | The calibrated gates with the real embedding model on fixed probe cases |
 | Eval check | `make eval-check` | Recomputes the LoCoMo calibration and compares it with `eval/results/` |
-| Latency | `make bench` | `/retrieve` and `/extract` at 100, 1k and 10k memories |
+| Latency | `make bench` | `/retrieve` and `/extract` at 100, 1k and 10k memories; CI fails if p95 doubles against its baseline or if `/extract` at 10k takes more than twice as long as at 1k |
 | Extension E2E | `make test-e2e` | The unpacked extension in Chromium, against a real backend and a fake Groq server, on fixture pages served at chatgpt.com and claude.ai: one send per prompt, one extraction per finished reply with the right prompt, composer swaps, the popup listing, deleting and clearing memories, and no manifest warnings |
 
 CI runs all five on every push. The ChatGPT composer selectors were checked against the live site on 2026-10-13 ([record](docs/live-checks/2026-10-13-chatgpt.json)). The Claude fixture reproduces the selectors the script relies on and has not been checked against the live site yet.
@@ -101,13 +101,12 @@ backend/                     FastAPI on 127.0.0.1:7842
 │                            GET /memories, DELETE /memories, DELETE /memories/{id}, GET /health
 ├── retriever.py             bge-small-en-v1.5 via fastembed (ONNX, no PyTorch), the retrieval gate
 ├── extractor.py             Groq extraction and the dedupe gate
-├── memory_store.py          SQLite plus a numpy matrix
+├── memory_store.py          SQLite, with the vectors also held in memory for search
 └── compressor.py            optional Groq prompt compression
 
 ~/.inf_mem/
-├── memories.db              text, type, keywords, importance, timestamps
-├── embeddings.npy           one 384-dim vector per memory
-└── memory_ids.npy           the memory ID of each vector row
+└── memories.db              text, type, keywords, importance, timestamps and the
+                             384-dim vector of each memory; a write touches only its row
 
 eval/                        LoCoMo calibration and recall eval (results/, calibration.md)
 bench/                       latency bench and committed results

@@ -47,6 +47,9 @@ EXTRACT_N = 50
 WARMUP = 10
 # --compare fails if a p95 exceeds this multiple of the baseline's.
 MAX_SLOWDOWN = 2.0
+# --scaling fails if /extract p50 at 10k memories exceeds this multiple of its
+# p50 at 1k. A ratio, so it holds on any machine.
+MAX_EXTRACT_SCALING = 2.0
 
 
 def cpu_name() -> str:
@@ -146,11 +149,25 @@ def compare(result: dict, baseline_path: Path) -> int:
     return 0
 
 
+def scaling(result: dict) -> int:
+    by = {r["memories"]: r for r in result["results"]}
+    if not {1000, 10000} <= by.keys():
+        print("FAIL: --scaling needs results at 1000 and 10000 memories")
+        return 1
+    small, big = by[1000]["extract"]["p50_ms"], by[10000]["extract"]["p50_ms"]
+    ratio = big / small
+    status = "ok" if ratio <= MAX_EXTRACT_SCALING else "FAIL"
+    print(f"extract p50: {small} ms at 1k, {big} ms at 10k, ratio {ratio:.2f} "
+          f"(limit {MAX_EXTRACT_SCALING}) -> {status}")
+    return 0 if status == "ok" else 1
+
+
 def main_() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sizes", type=int, nargs="+", default=list(SIZES))
     ap.add_argument("--out", type=Path)
     ap.add_argument("--compare", type=Path)
+    ap.add_argument("--scaling", action="store_true", help="fail if /extract slows with store size")
     args = ap.parse_args()
 
     texts, vec, queries = corpus()
@@ -168,9 +185,12 @@ def main_() -> int:
 
     if args.out:
         args.out.write_text(json.dumps(result, indent=2) + "\n")
+    status = 0
     if args.compare:
-        return compare(result, args.compare)
-    return 0
+        status |= compare(result, args.compare)
+    if args.scaling:
+        status |= scaling(result)
+    return status
 
 
 if __name__ == "__main__":

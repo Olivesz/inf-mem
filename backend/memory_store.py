@@ -1,15 +1,19 @@
 """
-SQLite + numpy storage backend for the inf-mem system.
+SQLite storage for memories and their embeddings.
 
 PURPOSE:
-Provide persistent storage for memories and their embeddings.
-Manages both relational data (SQLite) and high-dimensional vectors (numpy).
+Persist memories with their 384-dim embedding vectors in one SQLite table,
+and keep the vectors in an in-memory matrix for fast similarity search.
+
+Every write touches only the rows it changes. (An earlier version saved the
+whole embedding matrix to a .npy file on every insert, so /extract slowed as
+the store grew; bench/bench.py --scaling now fails if that comes back.)
 
 INPUTS:
-Memory objects, embeddings (numpy arrays of shape (N, 384))
+Memory objects, embeddings (numpy arrays of shape (384,))
 
 OUTPUTS:
-Persisted memories and embeddings; retrieved Memory objects from database
+Persisted memories; Memory objects and embedding rows on read
 """
 
 import json
@@ -21,54 +25,44 @@ import numpy as np
 
 from models import Memory, MemoryType
 
+DIM = 384
+
 
 class MemoryStore:
     """
-    Manages persistent storage of memories using SQLite + numpy embeddings.
+    Persistent memory storage: one SQLite file, vectors held in memory.
 
-    Maintains three files:
-    - memories.db: SQLite, structured memory metadata
-    - embeddings.npy: embedding vectors, shape (N, 384) for bge-small-en-v1.5
-    - memory_ids.npy: the memory ID of each embedding row, in row order
+    memories.db holds each memory's fields and its embedding (float32 BLOB).
+    On open, the embeddings are loaded into a matrix whose row i belongs to
+    memory_ids[i]. The matrix grows by doubling, so an insert does not copy it.
     """
 
     def __init__(self, data_dir: Path | None = None) -> None:
         """
-        Initialize storage directories and database.
+        Open (or create) the store in data_dir, default ~/.inf_mem.
 
-        Creates the data directory (default ~/.inf_mem) if needed, initializes
-        the SQLite schema, and loads or creates the embeddings array.
+        Stores written by older versions, with vectors in embeddings.npy and
+        memory_ids.npy, are migrated into the database once; the .npy files
+        are then renamed with a .migrated suffix, not deleted.
         """
         self.data_dir = Path(data_dir) if data_dir else Path.home() / ".inf_mem"
         self.data_dir.mkdir(parents=True, exist_ok=True)
-
         self.db_path = self.data_dir / "memories.db"
-        self.embeddings_path = self.data_dir / "embeddings.npy"
-        self.ids_path = self.data_dir / "memory_ids.npy"  # Maintain order of memory IDs
 
-        # Initialize database
         self._init_db()
+        self._migrate_npy()
+        self._load()
 
-        # Load or create embeddings array
-        # Shape: (N, 384) where N is number of memories and 384 is embedding dimension
-        if self.embeddings_path.exists() and self.ids_path.exists():
-            self.embeddings = np.load(self.embeddings_path, allow_pickle=False)
-            self.memory_ids = np.load(self.ids_path, allow_pickle=False).tolist()
-        else:
-            # Start with empty array and ID list
-            self.embeddings = np.zeros((0, 384), dtype=np.float32)
-            self.memory_ids = []
+    # ------------------------------------------------------------------ #
+    # schema, migration, loading
+    # ------------------------------------------------------------------ #
+
+    def _connect(self) -> sqlite3.Connection:
+        return sqlite3.connect(self.db_path)
 
     def _init_db(self) -> None:
-        """
-        Initialize SQLite database schema if it doesn't exist.
-
-        Creates the memories table with all required columns.
-        """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("""
+        conn = self._connect()
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS memories (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
@@ -81,81 +75,108 @@ class MemoryStore:
                 access_count INTEGER NOT NULL DEFAULT 0
             )
         """)
-
-        # Create index on user_id for faster queries
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_user_id ON memories(user_id)
-        """)
-
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(memories)")}
+        if "embedding" not in columns:
+            conn.execute("ALTER TABLE memories ADD COLUMN embedding BLOB")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_user_id ON memories(user_id)")
         conn.commit()
         conn.close()
+
+    def _migrate_npy(self) -> None:
+        emb_path = self.data_dir / "embeddings.npy"
+        ids_path = self.data_dir / "memory_ids.npy"
+        if not (emb_path.exists() and ids_path.exists()):
+            return
+        vectors = np.load(emb_path, allow_pickle=False)
+        ids = np.load(ids_path, allow_pickle=False).tolist()
+        conn = self._connect()
+        conn.executemany(
+            "UPDATE memories SET embedding = ? WHERE id = ? AND embedding IS NULL",
+            [(_blob(v), mid) for mid, v in zip(ids, vectors, strict=True)],
+        )
+        conn.commit()
+        conn.close()
+        emb_path.rename(emb_path.with_name("embeddings.npy.migrated"))
+        ids_path.rename(ids_path.with_name("memory_ids.npy.migrated"))
+
+    def _load(self) -> None:
+        conn = self._connect()
+        rows = conn.execute(
+            "SELECT id, user_id, embedding FROM memories WHERE embedding IS NOT NULL ORDER BY rowid"
+        ).fetchall()
+        conn.close()
+        self.memory_ids: list[str] = [r[0] for r in rows]
+        self._users: list[str] = [r[1] for r in rows]
+        self._buf = np.zeros((max(16, len(rows)), DIM), dtype=np.float32)
+        for i, r in enumerate(rows):
+            self._buf[i] = np.frombuffer(r[2], dtype=np.float32)
+        self._row = {mid: i for i, mid in enumerate(self.memory_ids)}
+        self._users_np = None
+
+    @property
+    def embeddings(self) -> np.ndarray:
+        """The live (N, 384) matrix; row i is memory_ids[i]. Do not write to it."""
+        return self._buf[: len(self.memory_ids)]
+
+    def _append_rows(self, ids: list[str], users: list[str], vectors: np.ndarray) -> None:
+        n, k = len(self.memory_ids), len(ids)
+        if n + k > len(self._buf):
+            grown = np.zeros((max(2 * len(self._buf), n + k), DIM), dtype=np.float32)
+            grown[:n] = self._buf[:n]
+            self._buf = grown
+        self._buf[n: n + k] = vectors
+        for offset, (mid, user) in enumerate(zip(ids, users, strict=True)):
+            self._row[mid] = n + offset
+        self.memory_ids.extend(ids)
+        self._users.extend(users)
+        self._users_np = None
+
+    def _drop_rows(self, rows: list[int]) -> None:
+        keep = np.setdiff1d(np.arange(len(self.memory_ids)), rows)
+        n = len(keep)
+        self._buf[:n] = self._buf[keep]
+        self.memory_ids = [self.memory_ids[i] for i in keep]
+        self._users = [self._users[i] for i in keep]
+        self._row = {mid: i for i, mid in enumerate(self.memory_ids)}
+        self._users_np = None
+
+    # ------------------------------------------------------------------ #
+    # writes: each one touches only its own rows
+    # ------------------------------------------------------------------ #
 
     def add_memory(self, memory: Memory, embedding: np.ndarray) -> None:
         """
-        Add a new memory to storage.
-
-        Args:
-            memory: Memory object with populated fields
-            embedding: 1D numpy array of shape (384,) from sentence-transformers
+        Add a new memory.
 
         Raises:
-            ValueError: If embedding shape is incorrect
+            ValueError: If embedding shape is not (384,)
         """
-        if embedding.shape != (384,):
-            raise ValueError(f"Embedding must have shape (384,), got {embedding.shape}")
-
-        # Insert into SQLite
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            INSERT INTO memories
-            (id, user_id, text, type, keywords, importance, created_at, updated_at, access_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            memory.id,
-            memory.user_id,
-            memory.text,
-            memory.type.value,
-            json.dumps(memory.keywords),
-            memory.importance,
-            memory.created_at.isoformat(),
-            memory.updated_at.isoformat(),
-            memory.access_count
-        ))
-
-        conn.commit()
-        conn.close()
-
-        # Append to numpy array and ID list
-        self.embeddings = np.vstack([self.embeddings, embedding.reshape(1, -1)])
-        self.memory_ids.append(memory.id)
-
-        # Save updated arrays
-        self._save_embeddings()
+        if embedding.shape != (DIM,):
+            raise ValueError(f"Embedding must have shape ({DIM},), got {embedding.shape}")
+        self.add_many([memory], embedding.reshape(1, -1))
 
     def add_many(self, memories: list[Memory], embeddings: np.ndarray) -> None:
         """
-        Add many memories with one SQLite transaction and one file write.
+        Add many memories in one transaction.
 
         Args:
             memories: Memory objects, in the same order as the embedding rows
             embeddings: Array of shape (len(memories), 384)
         """
-        if embeddings.shape != (len(memories), 384):
-            raise ValueError(f"Embeddings must have shape ({len(memories)}, 384), got {embeddings.shape}")
-        conn = sqlite3.connect(self.db_path)
+        if embeddings.shape != (len(memories), DIM):
+            raise ValueError(f"Embeddings must have shape ({len(memories)}, {DIM}), got {embeddings.shape}")
+        vectors = embeddings.astype(np.float32)
+        conn = self._connect()
         conn.executemany("""
             INSERT INTO memories
-            (id, user_id, text, type, keywords, importance, created_at, updated_at, access_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, user_id, text, type, keywords, importance, created_at, updated_at, access_count, embedding)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [(m.id, m.user_id, m.text, m.type.value, json.dumps(m.keywords), m.importance,
-               m.created_at.isoformat(), m.updated_at.isoformat(), m.access_count) for m in memories])
+               m.created_at.isoformat(), m.updated_at.isoformat(), m.access_count, _blob(v))
+              for m, v in zip(memories, vectors, strict=True)])
         conn.commit()
         conn.close()
-        self.embeddings = np.vstack([self.embeddings, embeddings.astype(np.float32)])
-        self.memory_ids.extend(m.id for m in memories)
-        self._save_embeddings()
+        self._append_rows([m.id for m in memories], [m.user_id for m in memories], vectors)
 
     def update_memory(
         self,
@@ -166,79 +187,59 @@ class MemoryStore:
         embedding: np.ndarray
     ) -> None:
         """
-        Update an existing memory's text, keywords, importance, and embedding.
-
-        Args:
-            memory_id: ID of memory to update
-            text: New memory text
-            keywords: New keywords list
-            importance: New importance score
-            embedding: New embedding vector
+        Update a memory's text, keywords, importance and embedding.
 
         Raises:
             ValueError: If memory not found or embedding shape incorrect
         """
-        if embedding.shape != (384,):
-            raise ValueError(f"Embedding must have shape (384,), got {embedding.shape}")
-
-        if memory_id not in self.memory_ids:
+        if embedding.shape != (DIM,):
+            raise ValueError(f"Embedding must have shape ({DIM},), got {embedding.shape}")
+        if memory_id not in self._row:
             raise ValueError(f"Memory {memory_id} not found")
-
-        # Update SQLite
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("""
+        vector = embedding.astype(np.float32)
+        conn = self._connect()
+        conn.execute("""
             UPDATE memories
-            SET text = ?, keywords = ?, importance = ?, updated_at = ?
+            SET text = ?, keywords = ?, importance = ?, updated_at = ?, embedding = ?
             WHERE id = ?
-        """, (
-            text,
-            json.dumps(keywords),
-            importance,
-            datetime.now(UTC).isoformat(),
-            memory_id
-        ))
-
+        """, (text, json.dumps(keywords), importance, datetime.now(UTC).isoformat(), _blob(vector), memory_id))
         conn.commit()
         conn.close()
-
-        # Update numpy array
-        idx = self.memory_ids.index(memory_id)
-        self.embeddings[idx] = embedding
-
-        # Save updated arrays
-        self._save_embeddings()
+        self._buf[self._row[memory_id]] = vector
 
     def delete_memory(self, memory_id: str) -> None:
         """
-        Delete a memory from storage.
-
-        Args:
-            memory_id: ID of memory to delete
+        Delete a memory.
 
         Raises:
             ValueError: If memory not found
         """
-        if memory_id not in self.memory_ids:
+        if memory_id not in self._row:
             raise ValueError(f"Memory {memory_id} not found")
-
-        # Delete from SQLite
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
-
+        conn = self._connect()
+        conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         conn.commit()
         conn.close()
+        self._drop_rows([self._row[memory_id]])
 
-        # Delete from numpy array
-        idx = self.memory_ids.index(memory_id)
-        self.embeddings = np.delete(self.embeddings, idx, axis=0)
-        self.memory_ids.pop(idx)
+    def delete_all(self, user_id: str) -> int:
+        """
+        Delete every memory belonging to a user.
 
-        # Save updated arrays
-        self._save_embeddings()
+        Returns:
+            Number of memories deleted
+        """
+        rows = [i for i, u in enumerate(self._users) if u == user_id]
+        conn = self._connect()
+        conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
+        conn.commit()
+        conn.close()
+        self._drop_rows(rows)
+        return len(rows)
+
+    # ------------------------------------------------------------------ #
+    # reads
+    # ------------------------------------------------------------------ #
 
     def get_all(self, user_id: str) -> list[Memory]:
         """
@@ -297,12 +298,7 @@ class MemoryStore:
         return self._row_to_memory(row)
 
     def get_embeddings(self) -> np.ndarray:
-        """
-        Get the full embeddings matrix.
-
-        Returns:
-            Numpy array of shape (N, 384) where N is number of memories
-        """
+        """A copy of the (N, 384) embedding matrix, rows in memory_ids order."""
         return self.embeddings.copy()
 
     def get_memory_ids(self, user_id: str) -> list[str]:
@@ -365,9 +361,16 @@ class MemoryStore:
         Returns:
             (ids, matrix) where matrix has shape (len(ids), 384)
         """
-        wanted = set(self.get_memory_ids(user_id))
-        rows = [i for i, mid in enumerate(self.memory_ids) if mid in wanted]
+        rows = np.flatnonzero(self._user_array() == user_id)
+        if len(rows) == len(self.memory_ids):
+            # One user owns every row (the usual case): a view, no copy.
+            return list(self.memory_ids), self.embeddings
         return [self.memory_ids[i] for i in rows], self.embeddings[rows]
+
+    def _user_array(self) -> np.ndarray:
+        if self._users_np is None or len(self._users_np) != len(self._users):
+            self._users_np = np.array(self._users, dtype=object)
+        return self._users_np
 
     def get_many(self, memory_ids: list[str]) -> list[Memory]:
         """Fetch several memories in one query (order not guaranteed)."""
@@ -393,35 +396,6 @@ class MemoryStore:
         )
         conn.commit()
         conn.close()
-
-    def delete_all(self, user_id: str) -> int:
-        """
-        Delete every memory belonging to a user.
-
-        Returns:
-            Number of memories deleted
-        """
-        doomed = set(self.get_memory_ids(user_id))
-        conn = sqlite3.connect(self.db_path)
-        conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
-        conn.commit()
-        conn.close()
-
-        keep = [i for i, mid in enumerate(self.memory_ids) if mid not in doomed]
-        self.embeddings = self.embeddings[keep]
-        self.memory_ids = [self.memory_ids[i] for i in keep]
-        self._save_embeddings()
-        return len(doomed)
-
-    def _save_embeddings(self) -> None:
-        """Save embeddings and ID list to numpy files.
-
-        IDs are stored as a plain unicode string array (not a pickled object
-        array) so they can be reloaded with ``allow_pickle=False`` — safer and
-        avoids the load-time crash that pickled object arrays caused.
-        """
-        np.save(self.embeddings_path, self.embeddings, allow_pickle=False)
-        np.save(self.ids_path, np.array(self.memory_ids, dtype=str), allow_pickle=False)
 
     @staticmethod
     def _row_to_memory(row: tuple) -> Memory:
@@ -450,6 +424,10 @@ class MemoryStore:
             updated_at=_aware(datetime.fromisoformat(updated_at)),
             access_count=access_count
         )
+
+
+def _blob(vector: np.ndarray) -> bytes:
+    return np.asarray(vector, dtype=np.float32).tobytes()
 
 
 def _aware(dt: datetime) -> datetime:

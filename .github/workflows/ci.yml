@@ -85,7 +85,7 @@ jobs:
           path: retrieval-recomputed.json
 
   bench:
-    name: latency bench (1k memories)
+    name: latency bench (1k and 10k memories)
     runs-on: ubuntu-latest
     env:
       FASTEMBED_CACHE_PATH: /home/runner/.cache/fastembed
@@ -105,14 +105,8 @@ jobs:
           path: eval/data
           key: locomo-79fa87e90f04
 
-      - name: Bench, and compare with the committed CI baseline once it exists
-        run: |
-          if [ -f bench/results-ci.json ]; then
-            python bench/bench.py --sizes 1000 --out bench-ci.json --compare bench/results-ci.json
-          else
-            echo "::warning::bench/results-ci.json not committed yet; recording a baseline only"
-            python bench/bench.py --sizes 100 1000 10000 --out bench-ci.json
-          fi
+      - name: Bench; compare p95 with the CI baseline; /extract must not slow with store size
+        run: python bench/bench.py --sizes 100 1000 10000 --out bench-ci.json --compare bench/results-ci.json --scaling
 
       - uses: actions/upload-artifact@v4
         with:

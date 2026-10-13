@@ -228,3 +228,56 @@ def test_add_many_matches_add_memory(store):
     assert set(ids) == {m.id for m in mems} and matrix.shape == (3, 384)
     with pytest.raises(ValueError):
         store.add_many(mems, np.zeros((2, 384), dtype=np.float32))
+
+
+def test_writes_never_rewrite_a_whole_file(store, monkeypatch):
+    """Each insert used to np.save the whole matrix; now writes touch only their rows."""
+    def boom(*a, **k):
+        raise AssertionError("np.save called on a write path")
+    monkeypatch.setattr(np, "save", boom)
+    m = _mem("one")
+    store.add_memory(m, _vec(1))
+    store.add_many([_mem("two"), _mem("three")], np.stack([_vec(2), _vec(3)]))
+    store.update_memory(m.id, "one!", [], 6, _vec(4))
+    store.delete_memory(m.id)
+    store.delete_all("u1")
+
+
+def test_rows_stay_aligned_after_delete_update_and_reopen(store, tmp_path):
+    mems = [_mem(f"m{i}") for i in range(5)]
+    for i, m in enumerate(mems):
+        store.add_memory(m, _vec(i))
+    store.delete_memory(mems[1].id)
+    store.update_memory(mems[3].id, "m3 new", [], 7, _vec(33))
+
+    reopened = MemoryStore(data_dir=store.data_dir)
+    want = {mems[0].id: _vec(0), mems[2].id: _vec(2), mems[3].id: _vec(33), mems[4].id: _vec(4)}
+    ids, matrix = reopened.get_user_vectors("u1")
+    assert set(ids) == set(want)
+    for mid, row in zip(ids, matrix, strict=True):
+        assert np.allclose(row, want[mid])
+
+
+def test_old_npy_store_is_migrated(tmp_path):
+    """A store written by the .npy version opens with its vectors intact."""
+    import sqlite3
+
+    data = tmp_path / ".inf_mem"
+    old = MemoryStore(data_dir=data)
+    mems = [_mem(f"old {i}") for i in range(3)]
+    old.add_many(mems, np.stack([_vec(i) for i in range(3)]))
+    # Recreate the old layout: vectors only in .npy files, none in the table.
+    conn = sqlite3.connect(data / "memories.db")
+    conn.execute("UPDATE memories SET embedding = NULL")
+    conn.commit()
+    conn.close()
+    np.save(data / "embeddings.npy", np.stack([_vec(i) for i in range(3)]))
+    np.save(data / "memory_ids.npy", np.array([m.id for m in mems], dtype=str))
+
+    migrated = MemoryStore(data_dir=data)
+    ids, matrix = migrated.get_user_vectors("u1")
+    assert ids == [m.id for m in mems]
+    assert np.allclose(matrix, np.stack([_vec(i) for i in range(3)]))
+    assert not (data / "embeddings.npy").exists()
+    assert (data / "embeddings.npy.migrated").exists()
+    assert MemoryStore(data_dir=data).get_embeddings().shape == (3, 384)
