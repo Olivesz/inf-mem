@@ -21,6 +21,13 @@ URL = f"https://raw.githubusercontent.com/snap-research/locomo/{COMMIT}/data/loc
 SHA256 = "79fa87e90f04081343b8c8debecb80a9a6842b76a7aa537dc9fdf651ea698ff4"
 DATA_PATH = Path(__file__).resolve().parent / "data" / "locomo10.json"
 
+# Held-out split, fixed before any result was looked at: the first five
+# conversations in file order choose thresholds, the last five are only
+# measured. Calibrating and reporting on the same questions would overstate
+# how well the chosen threshold generalises.
+CALIBRATION = slice(0, 5)
+EVALUATION = slice(5, 10)
+
 # Category 5 questions are adversarial: the answer is not in the conversation.
 # They are excluded from recall, which needs a real evidence turn.
 ANSWERABLE = {1: "multi-hop", 2: "temporal", 3: "open-domain", 4: "single-hop"}

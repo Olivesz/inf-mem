@@ -48,7 +48,7 @@ If nothing worth storing, respond with: []
 
 # A candidate whose cosine similarity to a stored memory is at or above this
 # value is treated as the same fact. See eval/calibration.md.
-DEDUPE_THRESHOLD = 0.945
+DEDUPE_THRESHOLD = 0.98
 
 # Counters surfaced by GET /health so failures are visible, not silent.
 stats = {"calls": 0, "parse_failures": 0, "invalid_items": 0}

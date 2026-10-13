@@ -26,17 +26,20 @@ def _load(rel: str) -> dict:
 def render() -> str:
     r = _load("eval/results/locomo-retrieval.json")
     d = _load("eval/results/dedupe-calibration.json")
-    obs = r["corpora"]["observations"]
-    gate = obs["gate"]["at_code_threshold"]
-    old = next(x for x in obs["gate"]["sweep"] if x["threshold"] == 0.35)
+    ev = r["evaluation_split"]
+    obs = ev["observations"]
+    gate, old = obs["gate_at_code_threshold"], obs["gate_at_old_threshold"]
     g, n, o = obs["with_code_threshold"], obs["no_gate"], obs["with_old_threshold_0_35"]
+    dc, de = d["calibration_split"], d["evaluation_split"]
     bench = sorted((ROOT / "bench").glob("results-*.json"))
 
     lines = [
         START,
-        (f"**Retrieval** on [LoCoMo](https://github.com/snap-research/locomo): {r['questions']:,} questions "
-        f"over {obs['memories']:,} fact-style memories, real embedding model, no LLM. "
-        "Method and caveats: [eval/calibration.md](eval/calibration.md)."),
+        (f"**Retrieval** on [LoCoMo](https://github.com/snap-research/locomo), real embedding model, no LLM. "
+         f"The gate was chosen on {r['calibration_split']['questions']} questions from five conversations; "
+         f"these numbers are from the other five ({ev['questions']} questions, "
+         f"{obs['memories']:,} fact-style memories), which played no part in the choice. "
+         "Method and caveats: [eval/calibration.md](eval/calibration.md)."),
         "",
         "| Retrieval gate | Recall@5 | Off-topic prompts that still inject memories |",
         "|---|---|---|",
@@ -44,10 +47,10 @@ def render() -> str:
         f"| 0.35 (old, hand-picked) | {o['recall_at_5']:.3f} | {old['off_topic_pass']:.0%} |",
         f"| **{gate['threshold']} (calibrated)** | **{g['recall_at_5']:.3f}** | **{gate['off_topic_pass']:.1%}** |",
         "",
-        (f"**Dedupe** on {d['labelled_pairs']} hand-labelled pairs: at the calibrated "
-        f"{d['best']['threshold']}, {d['best']['precision']:.0%} of merges are true duplicates, "
-        f"but only {d['best']['recall']:.0%} of duplicates are caught. Cosine similarity alone "
-        "cannot separate them."),
+        (f"**Dedupe**: on {dc['labelled_pairs'] + de['labelled_pairs']} hand-labelled pairs, no cosine threshold that merged anything "
+         "was at least 90% correct on the calibration pairs, so only near-verbatim restatements merge "
+         f"(cosine ≥ {de['code_threshold']}). On the evaluation pairs, {1 - de['at_old_threshold_0_85']['precision']:.0%} "
+         f"of the merges the old {de['at_old_threshold_0_85']['threshold']} gate made joined two different facts."),
         "",
         "**Latency** through the full HTTP stack, real model and store, Groq stubbed out:",
         "",

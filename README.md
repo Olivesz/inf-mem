@@ -38,15 +38,15 @@ Memories are stored and searched on your machine. Groq sees each prompt and repl
 ## Results
 
 <!-- results:start -->
-**Retrieval** on [LoCoMo](https://github.com/snap-research/locomo): 1,536 questions over 2,541 fact-style memories, real embedding model, no LLM. Method and caveats: [eval/calibration.md](eval/calibration.md).
+**Retrieval** on [LoCoMo](https://github.com/snap-research/locomo), real embedding model, no LLM. The gate was chosen on 760 questions from five conversations; these numbers are from the other five (776 questions, 1,331 fact-style memories), which played no part in the choice. Method and caveats: [eval/calibration.md](eval/calibration.md).
 
 | Retrieval gate | Recall@5 | Off-topic prompts that still inject memories |
 |---|---|---|
-| none | 0.562 | all of them (no gate) |
-| 0.35 (old, hand-picked) | 0.562 | 100% |
-| **0.61 (calibrated)** | **0.556** | **3.3%** |
+| none | 0.575 | all of them (no gate) |
+| 0.35 (old, hand-picked) | 0.575 | 100% |
+| **0.61 (calibrated)** | **0.571** | **4.4%** |
 
-**Dedupe** on 180 hand-labelled pairs: at the calibrated 0.945, 91% of merges are true duplicates, but only 4% of duplicates are caught. Cosine similarity alone cannot separate them.
+**Dedupe**: on 180 hand-labelled pairs, no cosine threshold that merged anything was at least 90% correct on the calibration pairs, so only near-verbatim restatements merge (cosine ≥ 0.98). On the evaluation pairs, 39% of the merges the old 0.85 gate made joined two different facts.
 
 **Latency** through the full HTTP stack, real model and store, Groq stubbed out:
 

@@ -1,751 +1,755 @@
 {
   "benchmark": "LoCoMo (locomo10.json)",
-  "corpora": {
-    "observations": {
-      "gate": {
-        "at_code_threshold": {
-          "j": 0.7266,
-          "off_topic_pass": 0.0326,
-          "on_topic_pass": 0.7591,
-          "threshold": 0.61
-        },
+  "calibration_split": {
+    "chosen_threshold": 0.61,
+    "chosen_variant": "bge_instruction",
+    "conversations": [
+      "conv-26",
+      "conv-30",
+      "conv-41",
+      "conv-42",
+      "conv-43"
+    ],
+    "questions": 760,
+    "variants": {
+      "bge_instruction": {
         "best": {
-          "j": 0.7266,
-          "off_topic_pass": 0.0326,
-          "on_topic_pass": 0.7591,
+          "j": 0.7118,
+          "off_topic_pass": 0.0171,
+          "on_topic_pass": 0.7289,
           "threshold": 0.61
         },
         "sweep": [
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.3
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.305
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.31
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.315
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.32
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.325
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.33
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.335
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.34
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.345
           },
           {
-            "j": -0.1458,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 0.8542,
+            "on_topic_pass": 0.8303,
             "threshold": 0.35
           },
           {
-            "j": -0.1445,
-            "off_topic_pass": 0.9987,
-            "on_topic_pass": 0.8542,
+            "j": -0.1697,
+            "off_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.355
           },
           {
-            "j": -0.1439,
-            "off_topic_pass": 0.998,
-            "on_topic_pass": 0.8542,
+            "j": -0.1697,
+            "off_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.36
           },
           {
-            "j": -0.1445,
-            "off_topic_pass": 0.9974,
-            "on_topic_pass": 0.8529,
+            "j": -0.1711,
+            "off_topic_pass": 1.0,
+            "on_topic_pass": 0.8289,
             "threshold": 0.365
           },
           {
-            "j": -0.1452,
-            "off_topic_pass": 0.9974,
-            "on_topic_pass": 0.8522,
+            "j": -0.1711,
+            "off_topic_pass": 1.0,
+            "on_topic_pass": 0.8289,
             "threshold": 0.37
           },
           {
-            "j": -0.1439,
-            "off_topic_pass": 0.9961,
-            "on_topic_pass": 0.8522,
+            "j": -0.1684,
+            "off_topic_pass": 0.9974,
+            "on_topic_pass": 0.8289,
             "threshold": 0.375
           },
           {
-            "j": -0.1432,
-            "off_topic_pass": 0.9954,
-            "on_topic_pass": 0.8522,
+            "j": -0.1671,
+            "off_topic_pass": 0.9961,
+            "on_topic_pass": 0.8289,
             "threshold": 0.38
           },
           {
-            "j": -0.14,
-            "off_topic_pass": 0.9922,
-            "on_topic_pass": 0.8522,
+            "j": -0.1671,
+            "off_topic_pass": 0.9961,
+            "on_topic_pass": 0.8289,
             "threshold": 0.385
           },
           {
-            "j": -0.138,
-            "off_topic_pass": 0.9902,
-            "on_topic_pass": 0.8522,
+            "j": -0.1645,
+            "off_topic_pass": 0.9934,
+            "on_topic_pass": 0.8289,
             "threshold": 0.39
           },
           {
-            "j": -0.1367,
-            "off_topic_pass": 0.9889,
-            "on_topic_pass": 0.8522,
+            "j": -0.1618,
+            "off_topic_pass": 0.9908,
+            "on_topic_pass": 0.8289,
             "threshold": 0.395
           },
           {
-            "j": -0.1328,
-            "off_topic_pass": 0.985,
-            "on_topic_pass": 0.8522,
+            "j": -0.1579,
+            "off_topic_pass": 0.9868,
+            "on_topic_pass": 0.8289,
             "threshold": 0.4
           },
           {
-            "j": -0.1296,
-            "off_topic_pass": 0.9818,
-            "on_topic_pass": 0.8522,
+            "j": -0.1526,
+            "off_topic_pass": 0.9816,
+            "on_topic_pass": 0.8289,
             "threshold": 0.405
           },
           {
-            "j": -0.1237,
-            "off_topic_pass": 0.9759,
-            "on_topic_pass": 0.8522,
+            "j": -0.1513,
+            "off_topic_pass": 0.9803,
+            "on_topic_pass": 0.8289,
             "threshold": 0.41
           },
           {
-            "j": -0.1191,
-            "off_topic_pass": 0.9714,
-            "on_topic_pass": 0.8522,
+            "j": -0.1408,
+            "off_topic_pass": 0.9697,
+            "on_topic_pass": 0.8289,
             "threshold": 0.415
           },
           {
-            "j": -0.1074,
-            "off_topic_pass": 0.9596,
-            "on_topic_pass": 0.8522,
+            "j": -0.1276,
+            "off_topic_pass": 0.9566,
+            "on_topic_pass": 0.8289,
             "threshold": 0.42
           },
           {
-            "j": -0.097,
-            "off_topic_pass": 0.9492,
-            "on_topic_pass": 0.8522,
+            "j": -0.1211,
+            "off_topic_pass": 0.95,
+            "on_topic_pass": 0.8289,
             "threshold": 0.425
           },
           {
-            "j": -0.0898,
-            "off_topic_pass": 0.9421,
-            "on_topic_pass": 0.8522,
+            "j": -0.1158,
+            "off_topic_pass": 0.9447,
+            "on_topic_pass": 0.8289,
             "threshold": 0.43
           },
           {
-            "j": -0.084,
-            "off_topic_pass": 0.9355,
-            "on_topic_pass": 0.8516,
+            "j": -0.1132,
+            "off_topic_pass": 0.9421,
+            "on_topic_pass": 0.8289,
             "threshold": 0.435
           },
           {
-            "j": -0.0664,
-            "off_topic_pass": 0.918,
-            "on_topic_pass": 0.8516,
+            "j": -0.0921,
+            "off_topic_pass": 0.9211,
+            "on_topic_pass": 0.8289,
             "threshold": 0.44
           },
           {
-            "j": -0.0547,
-            "off_topic_pass": 0.9056,
-            "on_topic_pass": 0.8509,
+            "j": -0.0737,
+            "off_topic_pass": 0.9026,
+            "on_topic_pass": 0.8289,
             "threshold": 0.445
           },
           {
-            "j": -0.0358,
-            "off_topic_pass": 0.8861,
-            "on_topic_pass": 0.8503,
+            "j": -0.0487,
+            "off_topic_pass": 0.8776,
+            "on_topic_pass": 0.8289,
             "threshold": 0.45
           },
           {
-            "j": -0.0111,
-            "off_topic_pass": 0.8607,
-            "on_topic_pass": 0.8496,
+            "j": -0.0197,
+            "off_topic_pass": 0.8474,
+            "on_topic_pass": 0.8276,
             "threshold": 0.455
           },
           {
-            "j": 0.0085,
-            "off_topic_pass": 0.8405,
-            "on_topic_pass": 0.849,
+            "j": 0.0079,
+            "off_topic_pass": 0.8184,
+            "on_topic_pass": 0.8263,
             "threshold": 0.46
           },
           {
-            "j": 0.0273,
-            "off_topic_pass": 0.821,
-            "on_topic_pass": 0.8483,
+            "j": 0.0237,
+            "off_topic_pass": 0.8013,
+            "on_topic_pass": 0.825,
             "threshold": 0.465
           },
           {
-            "j": 0.0469,
-            "off_topic_pass": 0.8001,
-            "on_topic_pass": 0.847,
+            "j": 0.0513,
+            "off_topic_pass": 0.7711,
+            "on_topic_pass": 0.8224,
             "threshold": 0.47
           },
           {
-            "j": 0.0723,
-            "off_topic_pass": 0.7734,
-            "on_topic_pass": 0.8457,
+            "j": 0.075,
+            "off_topic_pass": 0.7461,
+            "on_topic_pass": 0.8211,
             "threshold": 0.475
           },
           {
-            "j": 0.11,
-            "off_topic_pass": 0.735,
-            "on_topic_pass": 0.8451,
+            "j": 0.1118,
+            "off_topic_pass": 0.7079,
+            "on_topic_pass": 0.8197,
             "threshold": 0.48
           },
           {
-            "j": 0.1432,
-            "off_topic_pass": 0.7018,
-            "on_topic_pass": 0.8451,
+            "j": 0.1434,
+            "off_topic_pass": 0.6763,
+            "on_topic_pass": 0.8197,
             "threshold": 0.485
           },
           {
-            "j": 0.1699,
-            "off_topic_pass": 0.6732,
-            "on_topic_pass": 0.8431,
+            "j": 0.1855,
+            "off_topic_pass": 0.6329,
+            "on_topic_pass": 0.8184,
             "threshold": 0.49
           },
           {
-            "j": 0.2057,
-            "off_topic_pass": 0.6367,
-            "on_topic_pass": 0.8424,
+            "j": 0.2224,
+            "off_topic_pass": 0.5947,
+            "on_topic_pass": 0.8171,
             "threshold": 0.495
           },
           {
-            "j": 0.2376,
-            "off_topic_pass": 0.6035,
-            "on_topic_pass": 0.8411,
+            "j": 0.2592,
+            "off_topic_pass": 0.5566,
+            "on_topic_pass": 0.8158,
             "threshold": 0.5
           },
           {
-            "j": 0.2702,
-            "off_topic_pass": 0.569,
-            "on_topic_pass": 0.8392,
+            "j": 0.3,
+            "off_topic_pass": 0.5132,
+            "on_topic_pass": 0.8132,
             "threshold": 0.505
           },
           {
-            "j": 0.3112,
-            "off_topic_pass": 0.5267,
-            "on_topic_pass": 0.8379,
+            "j": 0.3395,
+            "off_topic_pass": 0.4724,
+            "on_topic_pass": 0.8118,
             "threshold": 0.51
           },
           {
-            "j": 0.3483,
-            "off_topic_pass": 0.4876,
-            "on_topic_pass": 0.8359,
+            "j": 0.375,
+            "off_topic_pass": 0.4342,
+            "on_topic_pass": 0.8092,
             "threshold": 0.515
           },
           {
-            "j": 0.3822,
-            "off_topic_pass": 0.4512,
-            "on_topic_pass": 0.8333,
+            "j": 0.4066,
+            "off_topic_pass": 0.4,
+            "on_topic_pass": 0.8066,
             "threshold": 0.52
           },
           {
-            "j": 0.4115,
-            "off_topic_pass": 0.4193,
-            "on_topic_pass": 0.8307,
+            "j": 0.4447,
+            "off_topic_pass": 0.3605,
+            "on_topic_pass": 0.8053,
             "threshold": 0.525
           },
           {
-            "j": 0.4486,
-            "off_topic_pass": 0.3796,
-            "on_topic_pass": 0.8281,
+            "j": 0.4763,
+            "off_topic_pass": 0.325,
+            "on_topic_pass": 0.8013,
             "threshold": 0.53
           },
           {
-            "j": 0.4928,
-            "off_topic_pass": 0.3307,
-            "on_topic_pass": 0.8236,
+            "j": 0.5184,
+            "off_topic_pass": 0.2776,
+            "on_topic_pass": 0.7961,
             "threshold": 0.535
           },
           {
-            "j": 0.5286,
-            "off_topic_pass": 0.2943,
-            "on_topic_pass": 0.8229,
+            "j": 0.5461,
+            "off_topic_pass": 0.2487,
+            "on_topic_pass": 0.7947,
             "threshold": 0.54
           },
           {
-            "j": 0.5645,
-            "off_topic_pass": 0.2539,
-            "on_topic_pass": 0.8184,
+            "j": 0.5776,
+            "off_topic_pass": 0.2132,
+            "on_topic_pass": 0.7908,
             "threshold": 0.545
           },
           {
-            "j": 0.599,
-            "off_topic_pass": 0.2174,
-            "on_topic_pass": 0.8164,
+            "j": 0.6145,
+            "off_topic_pass": 0.175,
+            "on_topic_pass": 0.7895,
             "threshold": 0.55
           },
           {
-            "j": 0.6204,
-            "off_topic_pass": 0.1895,
-            "on_topic_pass": 0.8099,
+            "j": 0.6395,
+            "off_topic_pass": 0.1421,
+            "on_topic_pass": 0.7816,
             "threshold": 0.555
           },
           {
-            "j": 0.6439,
-            "off_topic_pass": 0.1647,
-            "on_topic_pass": 0.8086,
+            "j": 0.6579,
+            "off_topic_pass": 0.1224,
+            "on_topic_pass": 0.7803,
             "threshold": 0.56
           },
           {
-            "j": 0.6621,
-            "off_topic_pass": 0.1445,
-            "on_topic_pass": 0.8066,
+            "j": 0.6711,
+            "off_topic_pass": 0.1053,
+            "on_topic_pass": 0.7763,
             "threshold": 0.565
           },
           {
-            "j": 0.6712,
-            "off_topic_pass": 0.1283,
-            "on_topic_pass": 0.7995,
+            "j": 0.675,
+            "off_topic_pass": 0.0947,
+            "on_topic_pass": 0.7697,
             "threshold": 0.57
           },
           {
-            "j": 0.6882,
-            "off_topic_pass": 0.1087,
-            "on_topic_pass": 0.7969,
+            "j": 0.6829,
+            "off_topic_pass": 0.0842,
+            "on_topic_pass": 0.7671,
             "threshold": 0.575
           },
           {
-            "j": 0.6966,
-            "off_topic_pass": 0.0957,
-            "on_topic_pass": 0.7923,
+            "j": 0.6882,
+            "off_topic_pass": 0.0724,
+            "on_topic_pass": 0.7605,
             "threshold": 0.58
           },
           {
-            "j": 0.7064,
-            "off_topic_pass": 0.0833,
-            "on_topic_pass": 0.7897,
+            "j": 0.6974,
+            "off_topic_pass": 0.0605,
+            "on_topic_pass": 0.7579,
             "threshold": 0.585
           },
           {
-            "j": 0.7207,
-            "off_topic_pass": 0.0651,
-            "on_topic_pass": 0.7858,
+            "j": 0.7079,
+            "off_topic_pass": 0.0461,
+            "on_topic_pass": 0.7539,
             "threshold": 0.59
           },
           {
-            "j": 0.7214,
-            "off_topic_pass": 0.0586,
-            "on_topic_pass": 0.7799,
+            "j": 0.7092,
+            "off_topic_pass": 0.0408,
+            "on_topic_pass": 0.75,
             "threshold": 0.595
           },
           {
-            "j": 0.722,
-            "off_topic_pass": 0.0482,
-            "on_topic_pass": 0.7702,
+            "j": 0.7105,
+            "off_topic_pass": 0.0289,
+            "on_topic_pass": 0.7395,
             "threshold": 0.6
           },
           {
-            "j": 0.7253,
-            "off_topic_pass": 0.0397,
-            "on_topic_pass": 0.765,
+            "j": 0.7105,
+            "off_topic_pass": 0.025,
+            "on_topic_pass": 0.7355,
             "threshold": 0.605
           },
           {
-            "j": 0.7266,
-            "off_topic_pass": 0.0326,
-            "on_topic_pass": 0.7591,
+            "j": 0.7118,
+            "off_topic_pass": 0.0171,
+            "on_topic_pass": 0.7289,
             "threshold": 0.61
           },
           {
-            "j": 0.7233,
-            "off_topic_pass": 0.028,
-            "on_topic_pass": 0.7513,
+            "j": 0.7066,
+            "off_topic_pass": 0.0158,
+            "on_topic_pass": 0.7224,
             "threshold": 0.615
           },
           {
-            "j": 0.7155,
-            "off_topic_pass": 0.0234,
-            "on_topic_pass": 0.7389,
+            "j": 0.6961,
+            "off_topic_pass": 0.0145,
+            "on_topic_pass": 0.7105,
             "threshold": 0.62
           },
           {
-            "j": 0.7135,
-            "off_topic_pass": 0.0202,
-            "on_topic_pass": 0.7337,
+            "j": 0.6908,
+            "off_topic_pass": 0.0132,
+            "on_topic_pass": 0.7039,
             "threshold": 0.625
           },
           {
-            "j": 0.7077,
-            "off_topic_pass": 0.0163,
-            "on_topic_pass": 0.724,
+            "j": 0.6829,
+            "off_topic_pass": 0.0092,
+            "on_topic_pass": 0.6921,
             "threshold": 0.63
           },
           {
-            "j": 0.6973,
-            "off_topic_pass": 0.013,
-            "on_topic_pass": 0.7103,
+            "j": 0.6697,
+            "off_topic_pass": 0.0079,
+            "on_topic_pass": 0.6776,
             "threshold": 0.635
           },
           {
-            "j": 0.6888,
-            "off_topic_pass": 0.0117,
-            "on_topic_pass": 0.7005,
+            "j": 0.6605,
+            "off_topic_pass": 0.0066,
+            "on_topic_pass": 0.6671,
             "threshold": 0.64
           },
           {
-            "j": 0.6816,
-            "off_topic_pass": 0.0085,
-            "on_topic_pass": 0.6901,
+            "j": 0.6553,
+            "off_topic_pass": 0.0039,
+            "on_topic_pass": 0.6592,
             "threshold": 0.645
           },
           {
-            "j": 0.6699,
-            "off_topic_pass": 0.0072,
-            "on_topic_pass": 0.6771,
+            "j": 0.6447,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.6474,
             "threshold": 0.65
           },
           {
-            "j": 0.6556,
-            "off_topic_pass": 0.0065,
-            "on_topic_pass": 0.6621,
+            "j": 0.6316,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.6342,
             "threshold": 0.655
           },
           {
-            "j": 0.6471,
-            "off_topic_pass": 0.0046,
-            "on_topic_pass": 0.6517,
+            "j": 0.625,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.6276,
             "threshold": 0.66
           },
           {
-            "j": 0.6341,
-            "off_topic_pass": 0.0039,
-            "on_topic_pass": 0.638,
+            "j": 0.6145,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.6158,
             "threshold": 0.665
           },
           {
-            "j": 0.623,
-            "off_topic_pass": 0.0033,
-            "on_topic_pass": 0.6263,
+            "j": 0.6039,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.6053,
             "threshold": 0.67
           },
           {
-            "j": 0.6133,
-            "off_topic_pass": 0.0026,
-            "on_topic_pass": 0.6159,
+            "j": 0.5934,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5947,
             "threshold": 0.675
           },
           {
-            "j": 0.6016,
-            "off_topic_pass": 0.0026,
-            "on_topic_pass": 0.6042,
+            "j": 0.5789,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5803,
             "threshold": 0.68
           },
           {
-            "j": 0.5768,
-            "off_topic_pass": 0.0026,
-            "on_topic_pass": 0.5794,
+            "j": 0.5592,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5605,
             "threshold": 0.685
           },
           {
-            "j": 0.5618,
-            "off_topic_pass": 0.002,
-            "on_topic_pass": 0.5638,
+            "j": 0.5447,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5461,
             "threshold": 0.69
           },
           {
-            "j": 0.5449,
-            "off_topic_pass": 0.002,
-            "on_topic_pass": 0.5469,
+            "j": 0.525,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5263,
             "threshold": 0.695
           },
           {
-            "j": 0.5286,
-            "off_topic_pass": 0.002,
-            "on_topic_pass": 0.5306,
+            "j": 0.5039,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5053,
             "threshold": 0.7
           },
           {
-            "j": 0.5046,
-            "off_topic_pass": 0.002,
-            "on_topic_pass": 0.5065,
+            "j": 0.4842,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.4855,
             "threshold": 0.705
           },
           {
-            "j": 0.4844,
-            "off_topic_pass": 0.0013,
-            "on_topic_pass": 0.4857,
+            "j": 0.4592,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.4592,
             "threshold": 0.71
           },
           {
-            "j": 0.4668,
-            "off_topic_pass": 0.0007,
-            "on_topic_pass": 0.4674,
+            "j": 0.4434,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.4434,
             "threshold": 0.715
           },
           {
-            "j": 0.446,
-            "off_topic_pass": 0.0007,
-            "on_topic_pass": 0.4466,
+            "j": 0.425,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.425,
             "threshold": 0.72
           },
           {
-            "j": 0.4284,
-            "off_topic_pass": 0.0007,
-            "on_topic_pass": 0.429,
+            "j": 0.4105,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.4105,
             "threshold": 0.725
           },
           {
-            "j": 0.4102,
+            "j": 0.3921,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.4102,
+            "on_topic_pass": 0.3921,
             "threshold": 0.73
           },
           {
-            "j": 0.3893,
+            "j": 0.3724,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.3893,
+            "on_topic_pass": 0.3724,
             "threshold": 0.735
           },
           {
-            "j": 0.3717,
+            "j": 0.3526,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.3717,
+            "on_topic_pass": 0.3526,
             "threshold": 0.74
           },
           {
-            "j": 0.3522,
+            "j": 0.3421,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.3522,
+            "on_topic_pass": 0.3421,
             "threshold": 0.745
           },
           {
-            "j": 0.3268,
+            "j": 0.3158,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.3268,
+            "on_topic_pass": 0.3158,
             "threshold": 0.75
           },
           {
-            "j": 0.304,
+            "j": 0.2934,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.304,
+            "on_topic_pass": 0.2934,
             "threshold": 0.755
           },
           {
-            "j": 0.2819,
+            "j": 0.2763,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.2819,
+            "on_topic_pass": 0.2763,
             "threshold": 0.76
           },
           {
-            "j": 0.2682,
+            "j": 0.2658,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.2682,
+            "on_topic_pass": 0.2658,
             "threshold": 0.765
           },
           {
-            "j": 0.248,
+            "j": 0.2434,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.248,
+            "on_topic_pass": 0.2434,
             "threshold": 0.77
           },
           {
-            "j": 0.2253,
+            "j": 0.2224,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.2253,
+            "on_topic_pass": 0.2224,
             "threshold": 0.775
           },
           {
-            "j": 0.2051,
+            "j": 0.2066,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.2051,
+            "on_topic_pass": 0.2066,
             "threshold": 0.78
           },
           {
-            "j": 0.1953,
+            "j": 0.1961,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1953,
+            "on_topic_pass": 0.1961,
             "threshold": 0.785
           },
           {
-            "j": 0.179,
+            "j": 0.1789,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.179,
+            "on_topic_pass": 0.1789,
             "threshold": 0.79
           },
           {
-            "j": 0.1647,
+            "j": 0.1645,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1647,
+            "on_topic_pass": 0.1645,
             "threshold": 0.795
           },
           {
-            "j": 0.1523,
+            "j": 0.15,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1523,
+            "on_topic_pass": 0.15,
             "threshold": 0.8
           },
           {
-            "j": 0.1315,
+            "j": 0.1342,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1315,
+            "on_topic_pass": 0.1342,
             "threshold": 0.805
           },
           {
-            "j": 0.1133,
+            "j": 0.1184,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1133,
+            "on_topic_pass": 0.1184,
             "threshold": 0.81
           },
           {
-            "j": 0.099,
+            "j": 0.1053,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.099,
+            "on_topic_pass": 0.1053,
             "threshold": 0.815
           },
           {
-            "j": 0.0892,
+            "j": 0.0908,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0892,
+            "on_topic_pass": 0.0908,
             "threshold": 0.82
           },
           {
-            "j": 0.0788,
+            "j": 0.0829,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0788,
+            "on_topic_pass": 0.0829,
             "threshold": 0.825
           },
           {
-            "j": 0.069,
+            "j": 0.0684,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.069,
+            "on_topic_pass": 0.0684,
             "threshold": 0.83
           },
           {
-            "j": 0.0573,
+            "j": 0.0553,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0573,
+            "on_topic_pass": 0.0553,
             "threshold": 0.835
           },
           {
-            "j": 0.0488,
+            "j": 0.0513,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0488,
+            "on_topic_pass": 0.0513,
             "threshold": 0.84
           },
           {
-            "j": 0.0365,
+            "j": 0.0421,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0365,
+            "on_topic_pass": 0.0421,
             "threshold": 0.845
           },
           {
-            "j": 0.0286,
+            "j": 0.0303,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0286,
+            "on_topic_pass": 0.0303,
             "threshold": 0.85
           },
           {
-            "j": 0.0228,
+            "j": 0.0224,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0228,
+            "on_topic_pass": 0.0224,
             "threshold": 0.855
           },
           {
-            "j": 0.0163,
+            "j": 0.0171,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0163,
+            "on_topic_pass": 0.0171,
             "threshold": 0.86
           },
           {
-            "j": 0.0137,
+            "j": 0.0132,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0137,
+            "on_topic_pass": 0.0132,
             "threshold": 0.865
           },
           {
-            "j": 0.0117,
+            "j": 0.0105,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0117,
+            "on_topic_pass": 0.0105,
             "threshold": 0.87
           },
           {
-            "j": 0.0091,
+            "j": 0.0066,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0091,
+            "on_topic_pass": 0.0066,
             "threshold": 0.875
           },
           {
-            "j": 0.0072,
+            "j": 0.0053,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0072,
+            "on_topic_pass": 0.0053,
             "threshold": 0.88
-          },
-          {
-            "j": 0.0059,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0059,
-            "threshold": 0.885
-          },
-          {
-            "j": 0.0052,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0052,
-            "threshold": 0.89
           },
           {
             "j": 0.0026,
             "off_topic_pass": 0.0,
             "on_topic_pass": 0.0026,
+            "threshold": 0.885
+          },
+          {
+            "j": 0.0026,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.0026,
+            "threshold": 0.89
+          },
+          {
+            "j": 0.0013,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.0013,
             "threshold": 0.895
           },
           {
-            "j": 0.002,
+            "j": 0.0013,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.002,
+            "on_topic_pass": 0.0013,
             "threshold": 0.9
           },
           {
-            "j": 0.0007,
+            "j": 0.0013,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0007,
+            "on_topic_pass": 0.0013,
             "threshold": 0.905
           },
           {
@@ -804,811 +808,768 @@
           }
         ]
       },
-      "memories": 2541,
-      "no_gate": {
-        "hit_at_5": 0.64,
-        "questions_with_no_memory_injected": 0,
-        "recall_at_5": 0.5624,
-        "recall_at_5_by_category": {
-          "multi-hop": 0.3558,
-          "open-domain": 0.2842,
-          "single-hop": 0.6021,
-          "temporal": 0.7199
-        }
-      },
-      "questions_with_a_relevant_memory": 1312,
-      "with_code_threshold": {
-        "hit_at_5": 0.6328,
-        "questions_with_no_memory_injected": 27,
-        "recall_at_5": 0.556,
-        "recall_at_5_by_category": {
-          "multi-hop": 0.3475,
-          "open-domain": 0.2624,
-          "single-hop": 0.5985,
-          "temporal": 0.7121
-        }
-      },
-      "with_old_threshold_0_35": {
-        "hit_at_5": 0.64,
-        "questions_with_no_memory_injected": 0,
-        "recall_at_5": 0.5624,
-        "recall_at_5_by_category": {
-          "multi-hop": 0.3558,
-          "open-domain": 0.2842,
-          "single-hop": 0.6021,
-          "temporal": 0.7199
-        }
-      }
-    },
-    "turns": {
-      "gate": {
-        "at_code_threshold": {
-          "j": 0.6374,
-          "off_topic_pass": 0.1152,
-          "on_topic_pass": 0.7526,
-          "threshold": 0.61
-        },
+      "plain": {
         "best": {
-          "j": 0.6419,
-          "off_topic_pass": 0.0911,
-          "on_topic_pass": 0.7331,
-          "threshold": 0.615
+          "j": 0.6882,
+          "off_topic_pass": 0.0605,
+          "on_topic_pass": 0.7487,
+          "threshold": 0.63
         },
         "sweep": [
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.3
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.305
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.31
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.315
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.32
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.325
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.33
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.335
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.34
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.345
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.35
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.355
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.36
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.365
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.37
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.375
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.38
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.385
           },
           {
-            "j": 0.0,
+            "j": -0.1697,
             "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "on_topic_pass": 0.8303,
             "threshold": 0.39
           },
           {
-            "j": 0.0,
-            "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "j": -0.1684,
+            "off_topic_pass": 0.9987,
+            "on_topic_pass": 0.8303,
             "threshold": 0.395
           },
           {
-            "j": 0.0,
-            "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "j": -0.1684,
+            "off_topic_pass": 0.9987,
+            "on_topic_pass": 0.8303,
             "threshold": 0.4
           },
           {
-            "j": 0.0,
-            "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "j": -0.1697,
+            "off_topic_pass": 0.9987,
+            "on_topic_pass": 0.8289,
             "threshold": 0.405
           },
           {
-            "j": 0.0,
-            "off_topic_pass": 1.0,
-            "on_topic_pass": 1.0,
+            "j": -0.1684,
+            "off_topic_pass": 0.9974,
+            "on_topic_pass": 0.8289,
             "threshold": 0.41
           },
           {
-            "j": 0.0,
-            "off_topic_pass": 0.9993,
-            "on_topic_pass": 0.9993,
+            "j": -0.1671,
+            "off_topic_pass": 0.9961,
+            "on_topic_pass": 0.8289,
             "threshold": 0.415
           },
           {
-            "j": 0.002,
-            "off_topic_pass": 0.9974,
-            "on_topic_pass": 0.9993,
+            "j": -0.1658,
+            "off_topic_pass": 0.9947,
+            "on_topic_pass": 0.8289,
             "threshold": 0.42
           },
           {
-            "j": 0.002,
-            "off_topic_pass": 0.9974,
-            "on_topic_pass": 0.9993,
+            "j": -0.1592,
+            "off_topic_pass": 0.9882,
+            "on_topic_pass": 0.8289,
             "threshold": 0.425
           },
           {
-            "j": 0.0039,
-            "off_topic_pass": 0.9954,
-            "on_topic_pass": 0.9993,
+            "j": -0.1592,
+            "off_topic_pass": 0.9882,
+            "on_topic_pass": 0.8289,
             "threshold": 0.43
           },
           {
-            "j": 0.0046,
-            "off_topic_pass": 0.9948,
-            "on_topic_pass": 0.9993,
+            "j": -0.1579,
+            "off_topic_pass": 0.9868,
+            "on_topic_pass": 0.8289,
             "threshold": 0.435
           },
           {
-            "j": 0.0033,
-            "off_topic_pass": 0.9941,
-            "on_topic_pass": 0.9974,
+            "j": -0.1526,
+            "off_topic_pass": 0.9816,
+            "on_topic_pass": 0.8289,
             "threshold": 0.44
           },
           {
-            "j": 0.0059,
-            "off_topic_pass": 0.9915,
-            "on_topic_pass": 0.9974,
+            "j": -0.1474,
+            "off_topic_pass": 0.9763,
+            "on_topic_pass": 0.8289,
             "threshold": 0.445
           },
           {
-            "j": 0.0085,
-            "off_topic_pass": 0.9889,
-            "on_topic_pass": 0.9974,
+            "j": -0.1434,
+            "off_topic_pass": 0.9724,
+            "on_topic_pass": 0.8289,
             "threshold": 0.45
           },
           {
-            "j": 0.0143,
-            "off_topic_pass": 0.9831,
-            "on_topic_pass": 0.9974,
+            "j": -0.1382,
+            "off_topic_pass": 0.9671,
+            "on_topic_pass": 0.8289,
             "threshold": 0.455
           },
           {
-            "j": 0.0176,
-            "off_topic_pass": 0.9785,
-            "on_topic_pass": 0.9961,
+            "j": -0.1329,
+            "off_topic_pass": 0.9618,
+            "on_topic_pass": 0.8289,
             "threshold": 0.46
           },
           {
-            "j": 0.0241,
-            "off_topic_pass": 0.9714,
-            "on_topic_pass": 0.9954,
+            "j": -0.1171,
+            "off_topic_pass": 0.9461,
+            "on_topic_pass": 0.8289,
             "threshold": 0.465
           },
           {
-            "j": 0.0312,
-            "off_topic_pass": 0.9622,
-            "on_topic_pass": 0.9935,
+            "j": -0.1066,
+            "off_topic_pass": 0.9355,
+            "on_topic_pass": 0.8289,
             "threshold": 0.47
           },
           {
-            "j": 0.0397,
-            "off_topic_pass": 0.9518,
-            "on_topic_pass": 0.9915,
+            "j": -0.1039,
+            "off_topic_pass": 0.9316,
+            "on_topic_pass": 0.8276,
             "threshold": 0.475
           },
           {
-            "j": 0.054,
-            "off_topic_pass": 0.9362,
-            "on_topic_pass": 0.9902,
+            "j": -0.0829,
+            "off_topic_pass": 0.9105,
+            "on_topic_pass": 0.8276,
             "threshold": 0.48
           },
           {
-            "j": 0.0625,
-            "off_topic_pass": 0.9264,
-            "on_topic_pass": 0.9889,
+            "j": -0.0592,
+            "off_topic_pass": 0.8842,
+            "on_topic_pass": 0.825,
             "threshold": 0.485
           },
           {
-            "j": 0.0749,
-            "off_topic_pass": 0.9115,
-            "on_topic_pass": 0.9863,
+            "j": -0.0408,
+            "off_topic_pass": 0.8658,
+            "on_topic_pass": 0.825,
             "threshold": 0.49
           },
           {
-            "j": 0.0924,
-            "off_topic_pass": 0.8926,
-            "on_topic_pass": 0.985,
+            "j": -0.0145,
+            "off_topic_pass": 0.8382,
+            "on_topic_pass": 0.8237,
             "threshold": 0.495
           },
           {
-            "j": 0.1146,
-            "off_topic_pass": 0.8678,
-            "on_topic_pass": 0.9824,
+            "j": 0.0013,
+            "off_topic_pass": 0.8224,
+            "on_topic_pass": 0.8237,
             "threshold": 0.5
           },
           {
-            "j": 0.1328,
-            "off_topic_pass": 0.8457,
-            "on_topic_pass": 0.9785,
+            "j": 0.0237,
+            "off_topic_pass": 0.7961,
+            "on_topic_pass": 0.8197,
             "threshold": 0.505
           },
           {
-            "j": 0.1595,
-            "off_topic_pass": 0.8145,
-            "on_topic_pass": 0.974,
+            "j": 0.0526,
+            "off_topic_pass": 0.7671,
+            "on_topic_pass": 0.8197,
             "threshold": 0.51
           },
           {
-            "j": 0.1868,
-            "off_topic_pass": 0.7826,
-            "on_topic_pass": 0.9694,
+            "j": 0.0684,
+            "off_topic_pass": 0.7513,
+            "on_topic_pass": 0.8197,
             "threshold": 0.515
           },
           {
-            "j": 0.2161,
-            "off_topic_pass": 0.7493,
-            "on_topic_pass": 0.9655,
+            "j": 0.0934,
+            "off_topic_pass": 0.725,
+            "on_topic_pass": 0.8184,
             "threshold": 0.52
           },
           {
-            "j": 0.25,
-            "off_topic_pass": 0.7116,
-            "on_topic_pass": 0.9616,
+            "j": 0.1289,
+            "off_topic_pass": 0.6855,
+            "on_topic_pass": 0.8145,
             "threshold": 0.525
           },
           {
-            "j": 0.2767,
-            "off_topic_pass": 0.6764,
-            "on_topic_pass": 0.9531,
+            "j": 0.175,
+            "off_topic_pass": 0.6395,
+            "on_topic_pass": 0.8145,
             "threshold": 0.53
           },
           {
-            "j": 0.3086,
-            "off_topic_pass": 0.6387,
-            "on_topic_pass": 0.9473,
+            "j": 0.2118,
+            "off_topic_pass": 0.6013,
+            "on_topic_pass": 0.8132,
             "threshold": 0.535
           },
           {
-            "j": 0.3372,
-            "off_topic_pass": 0.6048,
-            "on_topic_pass": 0.9421,
+            "j": 0.2474,
+            "off_topic_pass": 0.5645,
+            "on_topic_pass": 0.8118,
             "threshold": 0.54
           },
           {
-            "j": 0.3704,
-            "off_topic_pass": 0.5605,
-            "on_topic_pass": 0.931,
+            "j": 0.2842,
+            "off_topic_pass": 0.525,
+            "on_topic_pass": 0.8092,
             "threshold": 0.545
           },
           {
-            "j": 0.4043,
-            "off_topic_pass": 0.5195,
-            "on_topic_pass": 0.9238,
+            "j": 0.3145,
+            "off_topic_pass": 0.4934,
+            "on_topic_pass": 0.8079,
             "threshold": 0.55
           },
           {
-            "j": 0.4401,
-            "off_topic_pass": 0.4753,
-            "on_topic_pass": 0.9154,
+            "j": 0.3355,
+            "off_topic_pass": 0.4697,
+            "on_topic_pass": 0.8053,
             "threshold": 0.555
           },
           {
-            "j": 0.4707,
-            "off_topic_pass": 0.4342,
-            "on_topic_pass": 0.9049,
+            "j": 0.3789,
+            "off_topic_pass": 0.4237,
+            "on_topic_pass": 0.8026,
             "threshold": 0.56
           },
           {
-            "j": 0.4993,
-            "off_topic_pass": 0.3887,
-            "on_topic_pass": 0.888,
+            "j": 0.4026,
+            "off_topic_pass": 0.3974,
+            "on_topic_pass": 0.8,
             "threshold": 0.565
           },
           {
-            "j": 0.5189,
-            "off_topic_pass": 0.3561,
-            "on_topic_pass": 0.875,
+            "j": 0.4342,
+            "off_topic_pass": 0.3592,
+            "on_topic_pass": 0.7934,
             "threshold": 0.57
           },
           {
-            "j": 0.5475,
-            "off_topic_pass": 0.3197,
-            "on_topic_pass": 0.8672,
+            "j": 0.4737,
+            "off_topic_pass": 0.3184,
+            "on_topic_pass": 0.7921,
             "threshold": 0.575
           },
           {
-            "j": 0.5723,
-            "off_topic_pass": 0.2806,
-            "on_topic_pass": 0.8529,
+            "j": 0.5118,
+            "off_topic_pass": 0.275,
+            "on_topic_pass": 0.7868,
             "threshold": 0.58
           },
           {
-            "j": 0.5957,
-            "off_topic_pass": 0.2448,
-            "on_topic_pass": 0.8405,
+            "j": 0.5487,
+            "off_topic_pass": 0.2329,
+            "on_topic_pass": 0.7816,
             "threshold": 0.585
           },
           {
-            "j": 0.6094,
-            "off_topic_pass": 0.2122,
-            "on_topic_pass": 0.8216,
+            "j": 0.5776,
+            "off_topic_pass": 0.2,
+            "on_topic_pass": 0.7776,
             "threshold": 0.59
           },
           {
-            "j": 0.6224,
-            "off_topic_pass": 0.1823,
-            "on_topic_pass": 0.8047,
+            "j": 0.6105,
+            "off_topic_pass": 0.1658,
+            "on_topic_pass": 0.7763,
             "threshold": 0.595
           },
           {
-            "j": 0.6322,
-            "off_topic_pass": 0.1549,
-            "on_topic_pass": 0.7871,
+            "j": 0.6276,
+            "off_topic_pass": 0.1487,
+            "on_topic_pass": 0.7763,
             "threshold": 0.6
           },
           {
-            "j": 0.6387,
-            "off_topic_pass": 0.1328,
-            "on_topic_pass": 0.7715,
+            "j": 0.6395,
+            "off_topic_pass": 0.1329,
+            "on_topic_pass": 0.7724,
             "threshold": 0.605
           },
           {
-            "j": 0.6374,
-            "off_topic_pass": 0.1152,
-            "on_topic_pass": 0.7526,
+            "j": 0.6553,
+            "off_topic_pass": 0.1132,
+            "on_topic_pass": 0.7684,
             "threshold": 0.61
           },
           {
-            "j": 0.6419,
-            "off_topic_pass": 0.0911,
-            "on_topic_pass": 0.7331,
+            "j": 0.6592,
+            "off_topic_pass": 0.1066,
+            "on_topic_pass": 0.7658,
             "threshold": 0.615
           },
           {
-            "j": 0.6406,
-            "off_topic_pass": 0.0749,
-            "on_topic_pass": 0.7155,
+            "j": 0.6737,
+            "off_topic_pass": 0.0882,
+            "on_topic_pass": 0.7618,
             "threshold": 0.62
           },
           {
-            "j": 0.6322,
-            "off_topic_pass": 0.0618,
-            "on_topic_pass": 0.694,
+            "j": 0.6776,
+            "off_topic_pass": 0.0776,
+            "on_topic_pass": 0.7553,
             "threshold": 0.625
           },
           {
-            "j": 0.6159,
-            "off_topic_pass": 0.0534,
-            "on_topic_pass": 0.6693,
+            "j": 0.6882,
+            "off_topic_pass": 0.0605,
+            "on_topic_pass": 0.7487,
             "threshold": 0.63
           },
           {
-            "j": 0.6087,
-            "off_topic_pass": 0.0391,
-            "on_topic_pass": 0.6478,
+            "j": 0.6882,
+            "off_topic_pass": 0.0487,
+            "on_topic_pass": 0.7368,
             "threshold": 0.635
           },
           {
-            "j": 0.5938,
-            "off_topic_pass": 0.0306,
-            "on_topic_pass": 0.6243,
+            "j": 0.6868,
+            "off_topic_pass": 0.0382,
+            "on_topic_pass": 0.725,
             "threshold": 0.64
           },
           {
-            "j": 0.5755,
-            "off_topic_pass": 0.0267,
-            "on_topic_pass": 0.6022,
+            "j": 0.6829,
+            "off_topic_pass": 0.0329,
+            "on_topic_pass": 0.7158,
             "threshold": 0.645
           },
           {
-            "j": 0.5566,
-            "off_topic_pass": 0.0215,
-            "on_topic_pass": 0.5781,
+            "j": 0.6763,
+            "off_topic_pass": 0.0289,
+            "on_topic_pass": 0.7053,
             "threshold": 0.65
           },
           {
-            "j": 0.5326,
-            "off_topic_pass": 0.015,
-            "on_topic_pass": 0.5475,
+            "j": 0.6842,
+            "off_topic_pass": 0.0184,
+            "on_topic_pass": 0.7026,
             "threshold": 0.655
           },
           {
-            "j": 0.5091,
-            "off_topic_pass": 0.0111,
-            "on_topic_pass": 0.5202,
+            "j": 0.6776,
+            "off_topic_pass": 0.0184,
+            "on_topic_pass": 0.6961,
             "threshold": 0.66
           },
           {
-            "j": 0.4831,
-            "off_topic_pass": 0.0091,
-            "on_topic_pass": 0.4922,
+            "j": 0.6711,
+            "off_topic_pass": 0.0171,
+            "on_topic_pass": 0.6882,
             "threshold": 0.665
           },
           {
-            "j": 0.4551,
-            "off_topic_pass": 0.0046,
-            "on_topic_pass": 0.4596,
+            "j": 0.6658,
+            "off_topic_pass": 0.0092,
+            "on_topic_pass": 0.675,
             "threshold": 0.67
           },
           {
-            "j": 0.4349,
-            "off_topic_pass": 0.0033,
-            "on_topic_pass": 0.4382,
+            "j": 0.6566,
+            "off_topic_pass": 0.0079,
+            "on_topic_pass": 0.6645,
             "threshold": 0.675
           },
           {
-            "j": 0.4115,
-            "off_topic_pass": 0.0033,
-            "on_topic_pass": 0.4147,
+            "j": 0.6461,
+            "off_topic_pass": 0.0066,
+            "on_topic_pass": 0.6526,
             "threshold": 0.68
           },
           {
-            "j": 0.3789,
-            "off_topic_pass": 0.0013,
-            "on_topic_pass": 0.3802,
+            "j": 0.6329,
+            "off_topic_pass": 0.0039,
+            "on_topic_pass": 0.6368,
             "threshold": 0.685
           },
           {
-            "j": 0.347,
-            "off_topic_pass": 0.0013,
-            "on_topic_pass": 0.3483,
+            "j": 0.6237,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.6263,
             "threshold": 0.69
           },
           {
-            "j": 0.3197,
-            "off_topic_pass": 0.0013,
-            "on_topic_pass": 0.321,
+            "j": 0.6092,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.6118,
             "threshold": 0.695
           },
           {
-            "j": 0.2962,
-            "off_topic_pass": 0.0007,
-            "on_topic_pass": 0.2969,
+            "j": 0.5947,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.5974,
             "threshold": 0.7
           },
           {
-            "j": 0.2643,
-            "off_topic_pass": 0.0007,
-            "on_topic_pass": 0.265,
+            "j": 0.5868,
+            "off_topic_pass": 0.0026,
+            "on_topic_pass": 0.5895,
             "threshold": 0.705
           },
           {
-            "j": 0.2383,
-            "off_topic_pass": 0.0007,
-            "on_topic_pass": 0.2389,
+            "j": 0.5763,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5776,
             "threshold": 0.71
           },
           {
-            "j": 0.2161,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.2161,
+            "j": 0.5632,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5645,
             "threshold": 0.715
           },
           {
-            "j": 0.1953,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1953,
+            "j": 0.55,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5513,
             "threshold": 0.72
           },
           {
-            "j": 0.1693,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1693,
+            "j": 0.5408,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5421,
             "threshold": 0.725
           },
           {
-            "j": 0.1465,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.1465,
+            "j": 0.525,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5263,
             "threshold": 0.73
+          },
+          {
+            "j": 0.5066,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.5079,
+            "threshold": 0.735
+          },
+          {
+            "j": 0.4974,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.4987,
+            "threshold": 0.74
+          },
+          {
+            "j": 0.4763,
+            "off_topic_pass": 0.0013,
+            "on_topic_pass": 0.4776,
+            "threshold": 0.745
+          },
+          {
+            "j": 0.4605,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.4605,
+            "threshold": 0.75
+          },
+          {
+            "j": 0.4355,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.4355,
+            "threshold": 0.755
+          },
+          {
+            "j": 0.4118,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.4118,
+            "threshold": 0.76
+          },
+          {
+            "j": 0.3947,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.3947,
+            "threshold": 0.765
+          },
+          {
+            "j": 0.375,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.375,
+            "threshold": 0.77
+          },
+          {
+            "j": 0.3487,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.3487,
+            "threshold": 0.775
+          },
+          {
+            "j": 0.3303,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.3303,
+            "threshold": 0.78
+          },
+          {
+            "j": 0.3066,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.3066,
+            "threshold": 0.785
+          },
+          {
+            "j": 0.2868,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.2868,
+            "threshold": 0.79
+          },
+          {
+            "j": 0.275,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.275,
+            "threshold": 0.795
+          },
+          {
+            "j": 0.2487,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.2487,
+            "threshold": 0.8
+          },
+          {
+            "j": 0.2303,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.2303,
+            "threshold": 0.805
+          },
+          {
+            "j": 0.2184,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.2184,
+            "threshold": 0.81
+          },
+          {
+            "j": 0.2039,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.2039,
+            "threshold": 0.815
+          },
+          {
+            "j": 0.1908,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.1908,
+            "threshold": 0.82
+          },
+          {
+            "j": 0.1789,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.1789,
+            "threshold": 0.825
+          },
+          {
+            "j": 0.1697,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.1697,
+            "threshold": 0.83
+          },
+          {
+            "j": 0.1553,
+            "off_topic_pass": 0.0,
+            "on_topic_pass": 0.1553,
+            "threshold": 0.835
           },
           {
             "j": 0.1289,
             "off_topic_pass": 0.0,
             "on_topic_pass": 0.1289,
-            "threshold": 0.735
-          },
-          {
-            "j": 0.112,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.112,
-            "threshold": 0.74
-          },
-          {
-            "j": 0.0977,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0977,
-            "threshold": 0.745
-          },
-          {
-            "j": 0.0807,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0807,
-            "threshold": 0.75
-          },
-          {
-            "j": 0.0677,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0677,
-            "threshold": 0.755
-          },
-          {
-            "j": 0.0592,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0592,
-            "threshold": 0.76
-          },
-          {
-            "j": 0.0527,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0527,
-            "threshold": 0.765
-          },
-          {
-            "j": 0.0443,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0443,
-            "threshold": 0.77
-          },
-          {
-            "j": 0.0365,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0365,
-            "threshold": 0.775
-          },
-          {
-            "j": 0.0319,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0319,
-            "threshold": 0.78
-          },
-          {
-            "j": 0.0254,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0254,
-            "threshold": 0.785
-          },
-          {
-            "j": 0.0221,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0221,
-            "threshold": 0.79
-          },
-          {
-            "j": 0.0189,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0189,
-            "threshold": 0.795
-          },
-          {
-            "j": 0.0143,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0143,
-            "threshold": 0.8
-          },
-          {
-            "j": 0.0098,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0098,
-            "threshold": 0.805
-          },
-          {
-            "j": 0.0085,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0085,
-            "threshold": 0.81
-          },
-          {
-            "j": 0.0078,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0078,
-            "threshold": 0.815
-          },
-          {
-            "j": 0.0052,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0052,
-            "threshold": 0.82
-          },
-          {
-            "j": 0.0052,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0052,
-            "threshold": 0.825
-          },
-          {
-            "j": 0.0046,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0046,
-            "threshold": 0.83
-          },
-          {
-            "j": 0.0033,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0033,
-            "threshold": 0.835
-          },
-          {
-            "j": 0.0026,
-            "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0026,
             "threshold": 0.84
           },
           {
-            "j": 0.0026,
+            "j": 0.1118,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0026,
+            "on_topic_pass": 0.1118,
             "threshold": 0.845
           },
           {
-            "j": 0.0007,
+            "j": 0.1013,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0007,
+            "on_topic_pass": 0.1013,
             "threshold": 0.85
           },
           {
-            "j": 0.0,
+            "j": 0.0855,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0855,
             "threshold": 0.855
           },
           {
-            "j": 0.0,
+            "j": 0.075,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.075,
             "threshold": 0.86
           },
           {
-            "j": 0.0,
+            "j": 0.0579,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0579,
             "threshold": 0.865
           },
           {
-            "j": 0.0,
+            "j": 0.0447,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0447,
             "threshold": 0.87
           },
           {
-            "j": 0.0,
+            "j": 0.0342,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0342,
             "threshold": 0.875
           },
           {
-            "j": 0.0,
+            "j": 0.0289,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0289,
             "threshold": 0.88
           },
           {
-            "j": 0.0,
+            "j": 0.0211,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0211,
             "threshold": 0.885
           },
           {
-            "j": 0.0,
+            "j": 0.0132,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0132,
             "threshold": 0.89
           },
           {
-            "j": 0.0,
+            "j": 0.0092,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0092,
             "threshold": 0.895
           },
           {
-            "j": 0.0,
+            "j": 0.0079,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0079,
             "threshold": 0.9
           },
           {
-            "j": 0.0,
+            "j": 0.0079,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0079,
             "threshold": 0.905
           },
           {
-            "j": 0.0,
+            "j": 0.0053,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0053,
             "threshold": 0.91
           },
           {
-            "j": 0.0,
+            "j": 0.0053,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0053,
             "threshold": 0.915
           },
           {
-            "j": 0.0,
+            "j": 0.0039,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0039,
             "threshold": 0.92
           },
           {
-            "j": 0.0,
+            "j": 0.0026,
             "off_topic_pass": 0.0,
-            "on_topic_pass": 0.0,
+            "on_topic_pass": 0.0026,
             "threshold": 0.925
           },
           {
@@ -1642,50 +1603,122 @@
             "threshold": 0.95
           }
         ]
-      },
-      "memories": 5882,
-      "no_gate": {
-        "hit_at_5": 0.5365,
-        "questions_with_no_memory_injected": 0,
-        "recall_at_5": 0.4788,
-        "recall_at_5_by_category": {
-          "multi-hop": 0.2877,
-          "open-domain": 0.2129,
-          "single-hop": 0.5266,
-          "temporal": 0.5979
-        }
-      },
-      "questions_with_a_relevant_memory": 1536,
-      "with_code_threshold": {
-        "hit_at_5": 0.5143,
-        "questions_with_no_memory_injected": 44,
-        "recall_at_5": 0.4572,
-        "recall_at_5_by_category": {
-          "multi-hop": 0.2584,
-          "open-domain": 0.1803,
-          "single-hop": 0.5123,
-          "temporal": 0.5667
-        }
-      },
-      "with_old_threshold_0_35": {
-        "hit_at_5": 0.5365,
-        "questions_with_no_memory_injected": 0,
-        "recall_at_5": 0.4788,
-        "recall_at_5_by_category": {
-          "multi-hop": 0.2877,
-          "open-domain": 0.2129,
-          "single-hop": 0.5266,
-          "temporal": 0.5979
-        }
       }
     }
   },
   "dataset_commit": "3eb6f2c585f5e1699204e3c3bdf7adc5c28cb376",
   "dataset_sha256": "79fa87e90f04081343b8c8debecb80a9a6842b76a7aa537dc9fdf651ea698ff4",
   "embedding_model": "BAAI/bge-small-en-v1.5",
+  "evaluation_split": {
+    "code_query_instruction": "Represent this sentence for searching relevant passages: ",
+    "code_threshold": 0.61,
+    "conversations": [
+      "conv-44",
+      "conv-47",
+      "conv-48",
+      "conv-49",
+      "conv-50"
+    ],
+    "observations": {
+      "gate_at_code_threshold": {
+        "j": 0.7448,
+        "off_topic_pass": 0.0438,
+        "on_topic_pass": 0.7887,
+        "threshold": 0.61
+      },
+      "gate_at_old_threshold": {
+        "j": -0.1224,
+        "off_topic_pass": 1.0,
+        "on_topic_pass": 0.8776,
+        "threshold": 0.35
+      },
+      "memories": 1331,
+      "no_gate": {
+        "hit_at_5": 0.6637,
+        "questions_with_no_memory_injected": 0,
+        "recall_at_5": 0.5754,
+        "recall_at_5_by_category": {
+          "multi-hop": 0.3822,
+          "open-domain": 0.2564,
+          "single-hop": 0.6225,
+          "temporal": 0.7111
+        }
+      },
+      "questions_with_a_relevant_memory": 681,
+      "with_code_threshold": {
+        "hit_at_5": 0.6572,
+        "questions_with_no_memory_injected": 11,
+        "recall_at_5": 0.5711,
+        "recall_at_5_by_category": {
+          "multi-hop": 0.3727,
+          "open-domain": 0.2356,
+          "single-hop": 0.6225,
+          "temporal": 0.7051
+        }
+      },
+      "with_old_threshold_0_35": {
+        "hit_at_5": 0.6637,
+        "questions_with_no_memory_injected": 0,
+        "recall_at_5": 0.5754,
+        "recall_at_5_by_category": {
+          "multi-hop": 0.3822,
+          "open-domain": 0.2564,
+          "single-hop": 0.6225,
+          "temporal": 0.7111
+        }
+      }
+    },
+    "questions": 776,
+    "turns": {
+      "gate_at_code_threshold": {
+        "j": 0.6173,
+        "off_topic_pass": 0.1572,
+        "on_topic_pass": 0.7745,
+        "threshold": 0.61
+      },
+      "gate_at_old_threshold": {
+        "j": 0.0,
+        "off_topic_pass": 1.0,
+        "on_topic_pass": 1.0,
+        "threshold": 0.35
+      },
+      "memories": 3122,
+      "no_gate": {
+        "hit_at_5": 0.5232,
+        "questions_with_no_memory_injected": 0,
+        "recall_at_5": 0.4593,
+        "recall_at_5_by_category": {
+          "multi-hop": 0.2885,
+          "open-domain": 0.1875,
+          "single-hop": 0.528,
+          "temporal": 0.5071
+        }
+      },
+      "questions_with_a_relevant_memory": 776,
+      "with_code_threshold": {
+        "hit_at_5": 0.518,
+        "questions_with_no_memory_injected": 17,
+        "recall_at_5": 0.453,
+        "recall_at_5_by_category": {
+          "multi-hop": 0.279,
+          "open-domain": 0.1667,
+          "single-hop": 0.5244,
+          "temporal": 0.501
+        }
+      },
+      "with_old_threshold_0_35": {
+        "hit_at_5": 0.5232,
+        "questions_with_no_memory_injected": 0,
+        "recall_at_5": 0.4593,
+        "recall_at_5_by_category": {
+          "multi-hop": 0.2885,
+          "open-domain": 0.1875,
+          "single-hop": 0.528,
+          "temporal": 0.5071
+        }
+      }
+    }
+  },
   "k": 5,
-  "query_instruction": "Represent this sentence for searching relevant passages: ",
-  "questions": 1536,
-  "retrieve_threshold_in_code": 0.61,
   "unresolved_evidence_ids_dropped": 4
 }

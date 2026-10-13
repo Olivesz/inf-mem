@@ -60,6 +60,33 @@ def population(vec: dict, convs: list) -> dict:
     return counts
 
 
+def metrics(cos: np.ndarray, same: np.ndarray, w: np.ndarray, t: float) -> dict:
+    merged = cos >= t
+    tp = float((w * (merged & same)).sum())
+    fp = float((w * (merged & ~same)).sum())
+    return {"threshold": float(t),
+            "precision": round(tp / (tp + fp), 4) if tp + fp else 1.0,
+            "recall": round(tp / float((w * same).sum()), 4),
+            "merged_pairs_weighted": round(tp + fp, 2)}
+
+
+def split_arrays(pairs: list, convs: list, vec: dict) -> dict:
+    """Cosines, labels and stratum weights for the pairs from these conversations."""
+    ids = {c.sample_id for c in convs}
+    mine = [p for p in pairs if p["conversation"] in ids]
+    pop = population(vec, convs)
+    sampled = {k: sum(p["stratum"] == k for p in mine) for k in pop}
+    weight = {k: pop[k] / sampled[k] for k in pop}
+    return {
+        "cos": np.array([float(vec[p["a"]] @ vec[p["b"]]) for p in mine]),
+        "same": np.array([p["same_fact"] for p in mine]),
+        "w": np.array([weight[p["stratum"]] for p in mine]),
+        "summary": {"conversations": sorted(ids), "labelled_pairs": len(mine),
+                    "labelled_same_fact": sum(p["same_fact"] for p in mine),
+                    "population_pairs": pop, "stratum_weight": {k: round(v, 4) for k, v in weight.items()}},
+    }
+
+
 def run() -> dict:
     convs = locomo.load(locomo.fetch())
     pairs = [json.loads(line) for line in PAIRS.read_text().splitlines() if line.strip()]
@@ -69,41 +96,23 @@ def run() -> dict:
         digest = hashlib.sha1(f"{p['a']}\n{p['b']}".encode()).hexdigest()[:12]
         if digest != p["text_sha1"]:
             raise RuntimeError(f"label text changed for {p['conversation']} {p['text_sha1']}")
-    vec = retrieval.embed_all([o.text for c in convs for o in c.observations] +
-                              [t for p in pairs for t in (p["a"], p["b"])])
-    pop = population(vec, convs)
-    sampled = {k: sum(p["stratum"] == k for p in pairs) for k in pop}
-    weight = {k: pop[k] / sampled[k] for k in pop}
+    vec = retrieval.embed_all([o.text for c in convs for o in c.observations])
 
-    cos = np.array([float(vec[p["a"]] @ vec[p["b"]]) for p in pairs])
-    same = np.array([p["same_fact"] for p in pairs])
-    w = np.array([weight[p["stratum"]] for p in pairs])
-
-    rows = []
-    for t in SWEEP:
-        merged = cos >= t
-        tp = float((w * (merged & same)).sum())
-        fp = float((w * (merged & ~same)).sum())
-        precision = tp / (tp + fp) if tp + fp else 1.0
-        recall = tp / float((w * same).sum())
-        rows.append({"threshold": float(t), "precision": round(precision, 4),
-                     "recall": round(recall, 4), "merged_pairs_weighted": round(tp + fp, 2)})
-
-    best = next(r for r in rows if r["precision"] >= MIN_PRECISION)
-    at_code = min(rows, key=lambda r: abs(r["threshold"] - extractor.DEDUPE_THRESHOLD))
+    cal = split_arrays(pairs, convs[locomo.CALIBRATION], vec)
+    ev = split_arrays(pairs, convs[locomo.EVALUATION], vec)
+    sweep = [metrics(cal["cos"], cal["same"], cal["w"], t) for t in SWEEP]
+    best = next(r for r in sweep if r["precision"] >= MIN_PRECISION)
+    code = extractor.DEDUPE_THRESHOLD
     return {
         "benchmark": "LoCoMo observations (locomo10.json)",
         "dataset_sha256": locomo.SHA256,
         "embedding_model": retrieval.MODEL_ID,
-        "labelled_pairs": len(pairs),
-        "labelled_same_fact": int(same.sum()),
-        "population_pairs": pop,
-        "stratum_weight": {k: round(v, 4) for k, v in weight.items()},
-        "criterion": f"lowest threshold with weighted merge precision >= {MIN_PRECISION}",
-        "dedupe_threshold_in_code": extractor.DEDUPE_THRESHOLD,
-        "best": best,
-        "at_code_threshold": at_code,
-        "sweep": rows,
+        "criterion": f"lowest threshold with weighted merge precision >= {MIN_PRECISION} on the calibration split",
+        "calibration_split": {**cal["summary"], "chosen_threshold": best["threshold"],
+                              "at_chosen": best, "sweep": sweep},
+        "evaluation_split": {**ev["summary"], "code_threshold": code,
+                             "at_code_threshold": metrics(ev["cos"], ev["same"], ev["w"], code),
+                             "at_old_threshold_0_85": metrics(ev["cos"], ev["same"], ev["w"], 0.85)},
     }
 
 
@@ -116,8 +125,9 @@ def main() -> int:
         return compare.check(RESULTS, result)
     text = json.dumps(result, indent=2, sort_keys=True) + "\n"
     RESULTS.write_text(text)
-    d = json.loads(text)
-    print("best", d["best"], "at code", d["at_code_threshold"], "weights", d["stratum_weight"])
+    c, e = result["calibration_split"], result["evaluation_split"]
+    print("calibration chose", c["at_chosen"], "n", c["labelled_pairs"])
+    print("evaluation at code", e["at_code_threshold"], "at 0.85", e["at_old_threshold_0_85"], "n", e["labelled_pairs"])
     return 0
 
 

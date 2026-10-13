@@ -32,9 +32,11 @@ PROBE_MEMORIES = [
 def test_retrieve_threshold_matches_calibration():
     """No model needed: the constant in code must be the calibrated one."""
     data = json.loads((RESULTS / "locomo-retrieval.json").read_text())
-    best = data["corpora"]["observations"]["gate"]["best"]["threshold"]
-    assert retriever.RETRIEVE_THRESHOLD == best
-    assert data["retrieve_threshold_in_code"] == best
+    cal = data["calibration_split"]
+    assert retriever.RETRIEVE_THRESHOLD == cal["chosen_threshold"]
+    variant = {"bge_instruction": retriever.QUERY_INSTRUCTION != "", "plain": retriever.QUERY_INSTRUCTION == ""}
+    assert variant[cal["chosen_variant"]]
+    assert data["evaluation_split"]["code_threshold"] == cal["chosen_threshold"]
 
 
 @pytest.fixture(scope="module")
@@ -71,10 +73,10 @@ def test_dog_and_cat_named_biscuit_stay_two_memories(tmp_path):
 
 
 @pytest.mark.model
-def test_paraphrase_still_merges(tmp_path):
+def test_near_verbatim_restatement_still_merges(tmp_path):
     store = MemoryStore(data_dir=tmp_path)
     extractor.apply([{"text": "User has a dog named Biscuit", "type": "FACT", "importance": 5}], store)
-    extractor.apply([{"text": "The user has a dog called Biscuit", "type": "FACT", "importance": 6}], store)
+    extractor.apply([{"text": "The user has a dog named Biscuit", "type": "FACT", "importance": 6}], store)
     assert len(store.get_all("default")) == 1
 
 
@@ -87,5 +89,6 @@ def test_real_vectors_are_unit_length():
 def test_dedupe_threshold_matches_calibration():
     """No model needed: the constant in code must be the calibrated one."""
     data = json.loads((RESULTS / "dedupe-calibration.json").read_text())
-    assert extractor.DEDUPE_THRESHOLD == data["best"]["threshold"]
-    assert data["dedupe_threshold_in_code"] == data["best"]["threshold"]
+    chosen = data["calibration_split"]["chosen_threshold"]
+    assert extractor.DEDUPE_THRESHOLD == chosen
+    assert data["evaluation_split"]["code_threshold"] == chosen
