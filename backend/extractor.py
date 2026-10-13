@@ -50,8 +50,25 @@ If nothing worth storing, respond with: []
 # value is treated as the same fact. See eval/calibration.md.
 DEDUPE_THRESHOLD = 0.98
 
+# Below DEDUPE_THRESHOLD, cosine cannot tell a paraphrase from a different
+# fact (eval/calibration.md). With the merge judge on, stored memories at or
+# above JUDGE_CANDIDATE_THRESHOLD are shown to the model, which decides. It
+# stays off until eval/dedupe_judge.py measures it against the same bar the
+# cosine gate had to meet; that needs a Groq key.
+USE_MERGE_JUDGE = False
+JUDGE_CANDIDATE_THRESHOLD = 0.86
+JUDGE_MAX_CANDIDATES = 3
+
+JUDGE_SYSTEM_PROMPT = """You decide whether a new memory about a user repeats one already stored.
+Two memories are the same fact if they say the same thing about the same subject, even in different words.
+They are different if the subject or direction differs ("Sam thanks Evan" vs "Evan thanks Sam"),
+if they describe different events, or if one adds a distinct fact.
+
+Respond ONLY with JSON: {"same_as": <number of the stored memory that is the same fact, or null>}
+"""
+
 # Counters surfaced by GET /health so failures are visible, not silent.
-stats = {"calls": 0, "parse_failures": 0, "invalid_items": 0}
+stats = {"calls": 0, "parse_failures": 0, "invalid_items": 0, "judge_calls": 0, "judge_failures": 0}
 
 _FENCE = re.compile(r"^```[a-zA-Z]*\s*|\s*```$")
 
@@ -101,25 +118,69 @@ def call_model(client, prompt: str, response: str | None) -> str:
     return reply.choices[0].message.content or ""
 
 
-def nearest(embedding: np.ndarray, ids: list[str], matrix: np.ndarray) -> tuple:
-    """Return (memory_id, cosine) of the closest stored vector, or (None, -1.0)."""
+def judge(client, new_text: str, stored_texts: list[str]) -> int | None:
+    """
+    Ask the model which stored memory, if any, states the same fact.
+
+    Returns an index into stored_texts, or None. An unreadable reply counts
+    as a judge failure and returns None, so the new memory is added rather
+    than overwriting one it may not match.
+    """
+    stats["judge_calls"] += 1
+    listing = "\n".join(f"{i + 1}. {t}" for i, t in enumerate(stored_texts))
+    reply = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[
+            {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
+            {"role": "user", "content": f"New memory: {new_text}\n\nStored memories:\n{listing}"},
+        ],
+        temperature=0.0,
+        max_tokens=50,
+    )
+    text = _FENCE.sub("", (reply.choices[0].message.content or "").strip()).strip()
+    try:
+        same_as = json.loads(text[text.find("{"): text.rfind("}") + 1])["same_as"]
+    except (ValueError, KeyError, TypeError):
+        stats["judge_failures"] += 1
+        return None
+    if same_as is None:
+        return None
+    if isinstance(same_as, int) and not isinstance(same_as, bool) and 1 <= same_as <= len(stored_texts):
+        return same_as - 1
+    stats["judge_failures"] += 1
+    return None
+
+
+def find_duplicate(store: MemoryStore, user_id: str, embedding: np.ndarray, text: str, client) -> str | None:
+    """Return the ID of the stored memory that this one restates, or None."""
+    ids, matrix = store.get_user_vectors(user_id)
     if not ids:
-        return None, -1.0
+        return None
     sims = retriever.cosine_scores(embedding, matrix)
-    i = int(np.argmax(sims))
-    return ids[i], float(sims[i])
+    best = int(np.argmax(sims))
+    if sims[best] >= DEDUPE_THRESHOLD:
+        return ids[best]
+    if not (USE_MERGE_JUDGE and client is not None):
+        return None
+    order = [i for i in np.argsort(-sims)[:JUDGE_MAX_CANDIDATES] if sims[i] >= JUDGE_CANDIDATE_THRESHOLD]
+    if not order:
+        return None
+    pick = judge(client, text, [store.get_by_id(ids[i]).text for i in order])
+    return None if pick is None else ids[order[pick]]
 
 
 def apply(
     candidates: list[Any],
     store: MemoryStore,
     user_id: str = "default",
+    client=None,
 ) -> list[Memory]:
     """
     Deduplicate parsed candidates against the store and write them.
 
     For each candidate: embed it once, compare it with the user's stored
-    vectors in one matrix product, then ADD, UPDATE or skip.
+    vectors in one matrix product (and, if enabled, ask the merge judge),
+    then ADD, UPDATE or skip.
     """
     result: list[Memory] = []
     for item in candidates:
@@ -131,10 +192,9 @@ def apply(
             continue
 
         embedding = retriever.encode(extracted.text)
-        ids, matrix = store.get_user_vectors(user_id)
-        match_id, sim = nearest(embedding, ids, matrix)
+        match_id = find_duplicate(store, user_id, embedding, extracted.text, client)
 
-        if match_id is not None and sim >= DEDUPE_THRESHOLD:
+        if match_id is not None:
             existing = store.get_by_id(match_id)
             better = (extracted.importance > existing.importance
                       or len(extracted.text) > len(existing.text))
@@ -184,4 +244,4 @@ def extract(
     except ExtractionParseError:
         stats["parse_failures"] += 1
         raise
-    return apply(candidates, store, user_id)
+    return apply(candidates, store, user_id, client)

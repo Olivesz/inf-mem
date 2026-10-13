@@ -87,8 +87,8 @@ def split_arrays(pairs: list, convs: list, vec: dict) -> dict:
     }
 
 
-def run() -> dict:
-    convs = locomo.load(locomo.fetch())
+def load_pairs(convs: list) -> list:
+    """Labelled pairs with their observation text filled in and hash-checked."""
     pairs = [json.loads(line) for line in PAIRS.read_text().splitlines() if line.strip()]
     text = {(c.sample_id, o.key): o.text for c in convs for o in c.observations}
     for p in pairs:
@@ -96,6 +96,12 @@ def run() -> dict:
         digest = hashlib.sha1(f"{p['a']}\n{p['b']}".encode()).hexdigest()[:12]
         if digest != p["text_sha1"]:
             raise RuntimeError(f"label text changed for {p['conversation']} {p['text_sha1']}")
+    return pairs
+
+
+def run() -> dict:
+    convs = locomo.load(locomo.fetch())
+    pairs = load_pairs(convs)
     vec = retrieval.embed_all([o.text for c in convs for o in c.observations])
 
     cal = split_arrays(pairs, convs[locomo.CALIBRATION], vec)

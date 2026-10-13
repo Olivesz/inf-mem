@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 import extractor
 import retriever
-from fakes import FakeEncoder, FakeGroq
+from fakes import FakeEncoder, FakeGroq, GroqHTTP
 from memory_store import MemoryStore
 
 
@@ -102,3 +103,72 @@ def test_encode_called_once_per_candidate_not_per_stored_memory(store, monkeypat
 
     extractor.apply([_item("new fact one"), _item("new fact two")], store)
     assert len(enc.calls) == 2
+
+
+# --------------------------------------------------------------------------- #
+# merge judge (off by default; Groq mocked at the HTTP boundary)
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture
+def judge_on(monkeypatch):
+    monkeypatch.setattr(extractor, "USE_MERGE_JUDGE", True)
+
+
+def _near(base: str, cos: float):
+    """An encoder where ``near`` has exactly cosine ``cos`` to ``base``."""
+    rng = np.random.default_rng(1)
+    a = rng.standard_normal(384).astype(np.float32)
+    a /= np.linalg.norm(a)
+    o = rng.standard_normal(384).astype(np.float32)
+    o -= (o @ a) * a
+    o /= np.linalg.norm(o)
+    b = (cos * a + np.sqrt(1 - cos ** 2) * o).astype(np.float32)
+    table = {base: a, "near": b}
+    fallback = FakeEncoder()
+    return lambda text: table.get(text, fallback(text))
+
+
+def test_judge_off_by_default_never_calls_groq(store, monkeypatch):
+    monkeypatch.setattr(retriever, "encode", _near("stored", 0.92))
+    groq = GroqHTTP('{"same_as": 1}')
+    extractor.apply([_item("stored")], store, client=groq.client)
+    extractor.apply([_item("near", 9)], store, client=groq.client)
+    assert groq.requests == [] and len(store.get_all("default")) == 2
+
+
+def test_judge_same_fact_updates(store, monkeypatch, judge_on):
+    monkeypatch.setattr(retriever, "encode", _near("stored", 0.92))
+    groq = GroqHTTP('{"same_as": 1}')
+    extractor.apply([_item("stored")], store, client=groq.client)
+    out = extractor.apply([_item("near", 9)], store, client=groq.client)
+
+    assert [m.text for m in store.get_all("default")] == ["near"] and out[0].text == "near"
+    _, path, body = groq.requests[0]
+    assert path.endswith("/chat/completions")
+    assert "New memory: near" in body["messages"][1]["content"]
+    assert "1. stored" in body["messages"][1]["content"]
+
+
+@pytest.mark.parametrize("reply", ['{"same_as": null}', "no idea", '{"same_as": 7}', '{"same_as": true}'])
+def test_judge_no_or_bad_answer_adds(store, monkeypatch, judge_on, reply):
+    monkeypatch.setattr(retriever, "encode", _near("stored", 0.92))
+    groq = GroqHTTP(reply)
+    extractor.apply([_item("stored")], store, client=groq.client)
+    extractor.apply([_item("near", 9)], store, client=groq.client)
+    assert len(store.get_all("default")) == 2
+
+
+def test_judge_not_asked_below_candidate_threshold(store, monkeypatch, judge_on):
+    monkeypatch.setattr(retriever, "encode", _near("stored", 0.80))
+    groq = GroqHTTP('{"same_as": 1}')
+    extractor.apply([_item("stored")], store, client=groq.client)
+    extractor.apply([_item("near")], store, client=groq.client)
+    assert groq.requests == [] and len(store.get_all("default")) == 2
+
+
+def test_near_verbatim_merges_without_asking(store, monkeypatch, judge_on):
+    monkeypatch.setattr(retriever, "encode", _near("stored", 0.99))
+    groq = GroqHTTP('{"same_as": null}')
+    extractor.apply([_item("stored")], store, client=groq.client)
+    extractor.apply([_item("near", 9)], store, client=groq.client)
+    assert groq.requests == [] and len(store.get_all("default")) == 1

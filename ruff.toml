@@ -3,4 +3,4 @@ line-length = 110
 src = ["backend", "tests"]
 
 [lint.isort]
-known-first-party = ["compressor", "config", "extractor", "main", "memory_store", "models", "retriever", "fakes", "compare", "locomo", "retrieval"]
+known-first-party = ["compressor", "config", "extractor", "main", "memory_store", "models", "retriever", "fakes", "compare", "locomo", "retrieval", "dedupe"]
