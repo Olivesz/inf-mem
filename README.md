@@ -43,6 +43,9 @@ If nothing passes the gate, the prompt goes out unchanged and no panel appears.
 | Apple M5 | 100 | 15 / 38 ms | 27 / 58 ms |
 | Apple M5 | 1,000 | 19 / 48 ms | 28 / 99 ms |
 | Apple M5 | 10,000 | 45 / 84 ms | 90 / 150 ms |
+| AMD EPYC 7763 64-Core Processor | 100 | 11 / 13 ms | 19 / 24 ms |
+| AMD EPYC 7763 64-Core Processor | 1,000 | 14 / 17 ms | 24 / 25 ms |
+| AMD EPYC 7763 64-Core Processor | 10,000 | 82 / 101 ms | 172 / 183 ms |
 <!-- results:end -->
 
 Regenerate with `make calibrate`, `make bench` and `python eval/report.py`. CI recomputes the calibration from scratch and fails if it moves.

@@ -1,0 +1,53 @@
+{
+  "machine": {
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "os": "Linux 6.17.0-1022-azure",
+    "arch": "x86_64",
+    "python": "3.12.15",
+    "cpu_count": 4,
+    "load_avg_1m_at_start": 5.87
+  },
+  "date": "2026-10-13",
+  "method": "TestClient, real model and store; 200 /retrieve and 50 /extract per size after 10 warm-up calls; Groq stubbed with a fixed 2-fact reply",
+  "results": [
+    {
+      "memories": 100,
+      "retrieve": {
+        "p50_ms": 11.43,
+        "p95_ms": 13.04,
+        "n": 200
+      },
+      "extract": {
+        "p50_ms": 18.7,
+        "p95_ms": 23.9,
+        "n": 50
+      }
+    },
+    {
+      "memories": 1000,
+      "retrieve": {
+        "p50_ms": 14.5,
+        "p95_ms": 16.87,
+        "n": 200
+      },
+      "extract": {
+        "p50_ms": 23.61,
+        "p95_ms": 25.17,
+        "n": 50
+      }
+    },
+    {
+      "memories": 10000,
+      "retrieve": {
+        "p50_ms": 82.28,
+        "p95_ms": 100.69,
+        "n": 200
+      },
+      "extract": {
+        "p50_ms": 171.54,
+        "p95_ms": 183.4,
+        "n": 50
+      }
+    }
+  ]
+}
