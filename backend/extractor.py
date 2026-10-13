@@ -153,10 +153,9 @@ def judge(client, new_text: str, stored_texts: list[str]) -> int | None:
 
 def find_duplicate(store: MemoryStore, user_id: str, embedding: np.ndarray, text: str, client) -> str | None:
     """Return the ID of the stored memory that this one restates, or None."""
-    ids, matrix = store.get_user_vectors(user_id)
+    ids, sims, _ = store.search(user_id, embedding)
     if not ids:
         return None
-    sims = retriever.cosine_scores(embedding, matrix)
     best = int(np.argmax(sims))
     if sims[best] >= DEDUPE_THRESHOLD:
         return ids[best]

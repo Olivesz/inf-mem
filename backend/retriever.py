@@ -147,23 +147,16 @@ def retrieve(
     """
     if threshold is None:
         threshold = RETRIEVE_THRESHOLD
-    ids, matrix = store.get_user_vectors(user_id)
-    if not ids:
-        return []
-
-    sims = cosine_scores(encode_query(prompt), matrix)
+    ids, sims, importance = store.search(user_id, encode_query(prompt))
     passing = np.flatnonzero(sims >= threshold)
     if len(passing) == 0:
         return []
 
-    by_id = {m.id: m for m in store.get_many([ids[i] for i in passing])}
-    scored = []
-    for i in passing:
-        memory = by_id.get(ids[i])
-        if memory is not None:
-            scored.append((memory, float(sims[i]) * (1.0 + memory.importance / 10.0)))
-    scored.sort(key=lambda x: x[1], reverse=True)
-
-    result = [mem for mem, _ in scored[:limit]]
+    # Rank in numpy and fetch only the rows that will be returned. The stable
+    # sort keeps earlier-stored memories first among equal scores.
+    scores = sims[passing] * (1.0 + importance[passing] / 10.0)
+    top = passing[np.argsort(-scores, kind="stable")[:limit]]
+    by_id = {m.id: m for m in store.get_many([ids[i] for i in top])}
+    result = [by_id[ids[i]] for i in top if ids[i] in by_id]
     store.increment_access_many([m.id for m in result])
     return result

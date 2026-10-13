@@ -102,14 +102,18 @@ class MemoryStore:
     def _load(self) -> None:
         conn = self._connect()
         rows = conn.execute(
-            "SELECT id, user_id, embedding FROM memories WHERE embedding IS NOT NULL ORDER BY rowid"
+            "SELECT id, user_id, embedding, importance FROM memories WHERE embedding IS NOT NULL ORDER BY rowid"
         ).fetchall()
         conn.close()
         self.memory_ids: list[str] = [r[0] for r in rows]
         self._users: list[str] = [r[1] for r in rows]
-        self._buf = np.zeros((max(16, len(rows)), DIM), dtype=np.float32)
+        cap = max(16, len(rows))
+        self._buf = np.zeros((cap, DIM), dtype=np.float32)
+        self._imp = np.zeros(cap, dtype=np.float32)
         for i, r in enumerate(rows):
             self._buf[i] = np.frombuffer(r[2], dtype=np.float32)
+            self._imp[i] = r[3]
+        self._norms = np.linalg.norm(self._buf, axis=1)
         self._row = {mid: i for i, mid in enumerate(self.memory_ids)}
         self._users_np = None
 
@@ -118,13 +122,16 @@ class MemoryStore:
         """The live (N, 384) matrix; row i is memory_ids[i]. Do not write to it."""
         return self._buf[: len(self.memory_ids)]
 
-    def _append_rows(self, ids: list[str], users: list[str], vectors: np.ndarray) -> None:
+    def _append_rows(self, ids: list[str], users: list[str], vectors: np.ndarray, importance: list[int]) -> None:
         n, k = len(self.memory_ids), len(ids)
         if n + k > len(self._buf):
-            grown = np.zeros((max(2 * len(self._buf), n + k), DIM), dtype=np.float32)
-            grown[:n] = self._buf[:n]
-            self._buf = grown
+            cap = max(2 * len(self._buf), n + k)
+            self._buf = _grow(self._buf, cap, n)
+            self._norms = _grow(self._norms, cap, n)
+            self._imp = _grow(self._imp, cap, n)
         self._buf[n: n + k] = vectors
+        self._norms[n: n + k] = np.linalg.norm(vectors, axis=1)
+        self._imp[n: n + k] = importance
         for offset, (mid, user) in enumerate(zip(ids, users, strict=True)):
             self._row[mid] = n + offset
         self.memory_ids.extend(ids)
@@ -135,6 +142,8 @@ class MemoryStore:
         keep = np.setdiff1d(np.arange(len(self.memory_ids)), rows)
         n = len(keep)
         self._buf[:n] = self._buf[keep]
+        self._norms[:n] = self._norms[keep]
+        self._imp[:n] = self._imp[keep]
         self.memory_ids = [self.memory_ids[i] for i in keep]
         self._users = [self._users[i] for i in keep]
         self._row = {mid: i for i, mid in enumerate(self.memory_ids)}
@@ -176,7 +185,8 @@ class MemoryStore:
               for m, v in zip(memories, vectors, strict=True)])
         conn.commit()
         conn.close()
-        self._append_rows([m.id for m in memories], [m.user_id for m in memories], vectors)
+        self._append_rows([m.id for m in memories], [m.user_id for m in memories], vectors,
+                          [m.importance for m in memories])
 
     def update_memory(
         self,
@@ -205,7 +215,10 @@ class MemoryStore:
         """, (text, json.dumps(keywords), importance, datetime.now(UTC).isoformat(), _blob(vector), memory_id))
         conn.commit()
         conn.close()
-        self._buf[self._row[memory_id]] = vector
+        row = self._row[memory_id]
+        self._buf[row] = vector
+        self._norms[row] = np.linalg.norm(vector)
+        self._imp[row] = importance
 
     def delete_memory(self, memory_id: str) -> None:
         """
@@ -367,6 +380,26 @@ class MemoryStore:
             return list(self.memory_ids), self.embeddings
         return [self.memory_ids[i] for i in rows], self.embeddings[rows]
 
+    def search(self, user_id: str, query: np.ndarray) -> tuple[list[str], np.ndarray, np.ndarray]:
+        """
+        Cosine similarity of query against each of a user's memories.
+
+        Row norms are kept up to date on every write, so this is one
+        matrix-vector product with no temporary copy of the matrix.
+
+        Returns:
+            (ids, cosines, importance), aligned
+        """
+        rows = np.flatnonzero(self._user_array() == user_id)
+        n = len(self.memory_ids)
+        sel = slice(0, n) if len(rows) == n else rows
+        ids = list(self.memory_ids) if len(rows) == n else [self.memory_ids[i] for i in rows]
+        qn = float(np.linalg.norm(query))
+        dots = self._buf[sel] @ query
+        denom = self._norms[sel] * qn
+        sims = np.divide(dots, denom, out=np.zeros_like(dots), where=denom > 0)
+        return ids, sims, self._imp[sel].copy()
+
     def _user_array(self) -> np.ndarray:
         if self._users_np is None or len(self._users_np) != len(self._users):
             self._users_np = np.array(self._users, dtype=object)
@@ -424,6 +457,12 @@ class MemoryStore:
             updated_at=_aware(datetime.fromisoformat(updated_at)),
             access_count=access_count
         )
+
+
+def _grow(arr: np.ndarray, cap: int, n: int) -> np.ndarray:
+    out = np.zeros((cap, *arr.shape[1:]), dtype=arr.dtype)
+    out[:n] = arr[:n]
+    return out
 
 
 def _blob(vector: np.ndarray) -> bytes:

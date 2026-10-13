@@ -281,3 +281,30 @@ def test_old_npy_store_is_migrated(tmp_path):
     assert not (data / "embeddings.npy").exists()
     assert (data / "embeddings.npy.migrated").exists()
     assert MemoryStore(data_dir=data).get_embeddings().shape == (3, 384)
+
+
+def test_search_matches_reference_cosine_after_writes(store):
+    mems = [_mem(f"s{i}") for i in range(6)]
+    for i, m in enumerate(mems):
+        store.add_memory(m, _vec(i))
+    store.update_memory(mems[2].id, "s2 new", [], 5, _vec(22))
+    store.delete_memory(mems[4].id)
+    other = Memory(id=str(uuid4()), user_id="u2", text="theirs", type=MemoryType.FACT)
+    store.add_memory(other, _vec(99))
+
+    q = _vec(123)
+    ids, sims, _ = store.search("u1", q)
+    ref_ids, matrix = store.get_user_vectors("u1")
+    assert ids == ref_ids and other.id not in ids
+    assert np.allclose(sims, retriever.cosine_scores(q, matrix), atol=1e-6)
+
+
+def test_importance_update_changes_ranking(store, monkeypatch):
+    base = _vec(5)
+    a, b = _mem("a", importance=2), _mem("b", importance=3)
+    store.add_memory(a, base)
+    store.add_memory(b, base)
+    monkeypatch.setattr(retriever, "encode", lambda text: base)
+    assert [m.id for m in retriever.retrieve("q", store, "u1", threshold=0.5)] == [b.id, a.id]
+    store.update_memory(a.id, "a", [], 9, base)
+    assert [m.id for m in retriever.retrieve("q", store, "u1", threshold=0.5)] == [a.id, b.id]
