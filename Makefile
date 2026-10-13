@@ -18,6 +18,8 @@
 #   make calibrate  — recompute the gate calibration files in eval/results/
 #   make eval-check — recompute them and compare with the committed files
 #   make bench      — latency at 100, 1k and 10k memories
+#   make release    — zip the extension into dist/
+#   make release-check — run the extension E2E against the unzipped release
 #   make start      — start the memory backend server
 #   make dev        — start with auto-reload (development)
 #   make stop       — kill the backend server
@@ -33,7 +35,7 @@ BACKEND_DIR := backend
 PORT        := 7842
 PID_FILE    := .backend.pid
 
-.PHONY: install test test-e2e test-model calibrate eval-check bench start dev stop status memories clear clean help
+.PHONY: release release-check install test test-e2e test-model calibrate eval-check bench start dev stop status memories clear clean help
 
 # ------------------------------------------------------------
 # install: install all Python dependencies
@@ -60,6 +62,17 @@ calibrate:
 eval-check:
 	$(PYTHON) eval/retrieval.py --check
 	$(PYTHON) eval/dedupe.py --check
+
+release:
+	@version=$$(python3 -c "import json;print(json.load(open('extension/manifest.json'))['version'])"); \
+	mkdir -p dist; rm -f dist/inf-mem-extension-$$version.zip; \
+	cd extension && zip -qrX ../dist/inf-mem-extension-$$version.zip . -x '.*' && \
+	echo "built dist/inf-mem-extension-$$version.zip"
+
+release-check: release
+	@version=$$(python3 -c "import json;print(json.load(open('extension/manifest.json'))['version'])"); \
+	rm -rf dist/unzipped && mkdir -p dist/unzipped && unzip -q dist/inf-mem-extension-$$version.zip -d dist/unzipped && \
+	INF_MEM_EXTENSION_DIR=dist/unzipped PLAYWRIGHT_BROWSERS_PATH=0 $(PYTHON) -m pytest -q -m e2e
 
 bench:
 	$(PYTHON) bench/bench.py --out bench/results-local.json

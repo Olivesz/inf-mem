@@ -16,7 +16,9 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
-EXTENSION = ROOT / "extension"
+# INF_MEM_EXTENSION_DIR runs the suite against another copy, e.g. the unzipped
+# release asset (make release-check).
+EXTENSION = Path(os.environ.get("INF_MEM_EXTENSION_DIR", ROOT / "extension")).resolve()
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
