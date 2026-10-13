@@ -26,3 +26,4 @@ Thumbs.db
 
 # fastembed model cache
 .cache/
+.coverage

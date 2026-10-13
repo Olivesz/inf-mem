@@ -12,10 +12,18 @@ OUTPUTS:
 Pydantic models: MemoryType, Memory, ExtractRequest, RetrieveRequest, CompressRequest, ExtractedMemory
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel, Field
+
+from pydantic import AliasChoices, BaseModel, Field
+
+
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+# The extension sends camelCase ``userId``; accept either spelling.
+_USER_ID = AliasChoices("user_id", "userId")
 
 
 class MemoryType(str, Enum):
@@ -36,26 +44,26 @@ class Memory(BaseModel):
     user_id: str = Field(default="default", description="User this memory belongs to")
     text: str = Field(..., description="The memory content")
     type: MemoryType = Field(..., description="Category of the memory")
-    keywords: List[str] = Field(default_factory=list, description="Tags/keywords for the memory")
+    keywords: list[str] = Field(default_factory=list, description="Tags/keywords for the memory")
     importance: int = Field(default=5, ge=1, le=10, description="Importance score 1-10")
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+    created_at: datetime = Field(default_factory=_now, description="Creation timestamp")
+    updated_at: datetime = Field(default_factory=_now, description="Last update timestamp")
     access_count: int = Field(default=0, description="Number of times retrieved")
 
 
 class ExtractRequest(BaseModel):
     """API request to extract memories from a prompt/response pair."""
     prompt: str = Field(..., description="User prompt text")
-    response: Optional[str] = Field(default=None, description="Optional AI response to extract from")
-    user_id: str = Field(default="default", description="User identifier")
+    response: str | None = Field(default=None, description="Optional AI response to extract from")
+    user_id: str = Field(default="default", validation_alias=_USER_ID, description="User identifier")
 
 
 class RetrieveRequest(BaseModel):
     """API request to retrieve relevant memories."""
     prompt: str = Field(..., description="Query text to find relevant memories")
     limit: int = Field(default=5, ge=1, le=50, description="Maximum memories to return")
-    user_id: str = Field(default="default", description="User identifier")
-    threshold: float = Field(default=0.35, ge=0.0, le=1.0, description="Similarity threshold (0-1)")
+    user_id: str = Field(default="default", validation_alias=_USER_ID, description="User identifier")
+    threshold: float | None = Field(default=None, ge=0.0, le=1.0, description="Similarity threshold (0-1); omit for the calibrated default")
 
 
 class CompressRequest(BaseModel):
@@ -67,5 +75,5 @@ class ExtractedMemory(BaseModel):
     """Output format from Groq extraction (intermediate format)."""
     text: str = Field(..., description="The memory text")
     type: str = Field(..., description="Memory type as string")
-    keywords: List[str] = Field(default_factory=list, description="Keywords/tags")
+    keywords: list[str] = Field(default_factory=list, description="Keywords/tags")
     importance: int = Field(default=5, ge=1, le=10, description="Importance score")

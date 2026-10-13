@@ -6,7 +6,18 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.17.0
+      - run: ruff check .
+
   test:
+    name: unit + API (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -15,19 +26,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install dependencies
+      - name: Install runtime and dev requirements
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
 
-      - name: Lint (ruff — real-bug checks)
-        run: ruff check --select=E9,F63,F7,F82 .
+      - name: Import the app the way uvicorn does
+        working-directory: backend
+        run: python -c "import main, extractor, retriever, compressor"
 
-      - name: Run tests
-        run: pytest -q
+      - name: Unit and API tests, with coverage gate
+        run: pytest -q --cov=backend --cov-report=term-missing --cov-fail-under=85

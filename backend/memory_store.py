@@ -14,10 +14,8 @@ Persisted memories and embeddings; retrieved Memory objects from database
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional
-from uuid import uuid4
 
 import numpy as np
 
@@ -28,11 +26,10 @@ class MemoryStore:
     """
     Manages persistent storage of memories using SQLite + numpy embeddings.
 
-    Maintains two storage backends:
-    - SQLite database: structured memory metadata
-    - Numpy file: embedding vectors (shape: N x 384 for all-MiniLM-L6-v2)
-
-    The embedding matrix rows correspond to memory IDs in a fixed order.
+    Maintains three files:
+    - memories.db: SQLite, structured memory metadata
+    - embeddings.npy: embedding vectors, shape (N, 384) for bge-small-en-v1.5
+    - memory_ids.npy: the memory ID of each embedding row, in row order
     """
 
     def __init__(self) -> None:
@@ -142,7 +139,7 @@ class MemoryStore:
         self,
         memory_id: str,
         text: str,
-        keywords: List[str],
+        keywords: list[str],
         importance: int,
         embedding: np.ndarray
     ) -> None:
@@ -177,7 +174,7 @@ class MemoryStore:
             text,
             json.dumps(keywords),
             importance,
-            datetime.utcnow().isoformat(),
+            datetime.now(UTC).isoformat(),
             memory_id
         ))
 
@@ -221,7 +218,7 @@ class MemoryStore:
         # Save updated arrays
         self._save_embeddings()
 
-    def get_all(self, user_id: str) -> List[Memory]:
+    def get_all(self, user_id: str) -> list[Memory]:
         """
         Retrieve all memories for a user.
 
@@ -250,7 +247,7 @@ class MemoryStore:
 
         return memories
 
-    def get_by_id(self, memory_id: str) -> Optional[Memory]:
+    def get_by_id(self, memory_id: str) -> Memory | None:
         """
         Retrieve a single memory by ID.
 
@@ -286,7 +283,7 @@ class MemoryStore:
         """
         return self.embeddings.copy()
 
-    def get_memory_ids(self, user_id: str) -> List[str]:
+    def get_memory_ids(self, user_id: str) -> list[str]:
         """
         Get ordered list of memory IDs for a user.
 
@@ -339,6 +336,61 @@ class MemoryStore:
         conn.commit()
         conn.close()
 
+    def get_user_vectors(self, user_id: str) -> tuple[list[str], np.ndarray]:
+        """
+        Get a user's memory IDs and their embedding rows, in matching order.
+
+        Returns:
+            (ids, matrix) where matrix has shape (len(ids), 384)
+        """
+        wanted = set(self.get_memory_ids(user_id))
+        rows = [i for i, mid in enumerate(self.memory_ids) if mid in wanted]
+        return [self.memory_ids[i] for i in rows], self.embeddings[rows]
+
+    def get_many(self, memory_ids: list[str]) -> list[Memory]:
+        """Fetch several memories in one query (order not guaranteed)."""
+        if not memory_ids:
+            return []
+        conn = sqlite3.connect(self.db_path)
+        marks = ",".join("?" * len(memory_ids))
+        rows = conn.execute(f"""
+            SELECT id, user_id, text, type, keywords, importance, created_at, updated_at, access_count
+            FROM memories WHERE id IN ({marks})
+        """, memory_ids).fetchall()
+        conn.close()
+        return [self._row_to_memory(row) for row in rows]
+
+    def increment_access_many(self, memory_ids: list[str]) -> None:
+        """Increment the access count of several memories; unknown IDs are ignored."""
+        if not memory_ids:
+            return
+        conn = sqlite3.connect(self.db_path)
+        conn.executemany(
+            "UPDATE memories SET access_count = access_count + 1 WHERE id = ?",
+            [(mid,) for mid in memory_ids],
+        )
+        conn.commit()
+        conn.close()
+
+    def delete_all(self, user_id: str) -> int:
+        """
+        Delete every memory belonging to a user.
+
+        Returns:
+            Number of memories deleted
+        """
+        doomed = set(self.get_memory_ids(user_id))
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
+        conn.commit()
+        conn.close()
+
+        keep = [i for i, mid in enumerate(self.memory_ids) if mid not in doomed]
+        self.embeddings = self.embeddings[keep]
+        self.memory_ids = [self.memory_ids[i] for i in keep]
+        self._save_embeddings()
+        return len(doomed)
+
     def _save_embeddings(self) -> None:
         """Save embeddings and ID list to numpy files.
 
@@ -372,7 +424,12 @@ class MemoryStore:
             type=MemoryType(mem_type),
             keywords=json.loads(keywords_json),
             importance=importance,
-            created_at=datetime.fromisoformat(created_at),
-            updated_at=datetime.fromisoformat(updated_at),
+            created_at=_aware(datetime.fromisoformat(created_at)),
+            updated_at=_aware(datetime.fromisoformat(updated_at)),
             access_count=access_count
         )
+
+
+def _aware(dt: datetime) -> datetime:
+    """Rows written before timestamps carried a zone were naive UTC."""
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)

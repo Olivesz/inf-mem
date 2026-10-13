@@ -26,7 +26,7 @@ Injects memory context into your prompt, sends it
 After response arrives → Groq extracts new memories → stored locally
 ```
 
-Memory persists across every conversation, forever, entirely on your machine.
+Memories are stored and searched on your machine. Groq sees each prompt and reply sent for extraction.
 
 <p align="center">
   <img src="docs/popup.png" width="420" alt="The extension popup connected to the running local backend — live status, memory count, and typed memory cards">
@@ -62,11 +62,13 @@ Local Python Backend (FastAPI @ localhost:7842)
 ├── POST /compress        — Groq compresses verbose prompts
 ├── GET  /memories        — list all stored memories
 ├── DELETE /memories/{id} — delete a memory
+├── DELETE /memories      — delete all of a user's memories
 └── GET  /health          — status check
 
 Storage (in ~/.inf_mem/)
 ├── memories.db           — SQLite: text, type, keywords, importance
-└── embeddings.npy        — numpy: 384-dim vectors (BAAI/bge-small-en-v1.5)
+├── embeddings.npy        — numpy: 384-dim vectors (BAAI/bge-small-en-v1.5)
+└── memory_ids.npy        — the memory ID of each embedding row
 ```
 
 **LLM**: [Groq](https://console.groq.com) free tier — llama-3.1-8b-instant. Fast, free, no GPU.
@@ -92,7 +94,7 @@ cp config.example.yaml config.yaml
 ```bash
 make install
 make start
-make status   # should show: {"status": "ok", "groq_connected": true}
+make status   # groq_configured and groq_reachable should both be true
 ```
 
 On first use, fastembed downloads the embedding model (~130MB) to ~/.cache/fastembed/. One-time only.
@@ -184,5 +186,8 @@ MIT — see [LICENSE](LICENSE).
 
 ```bash
 pip install -r requirements-dev.txt
-pytest -q  (models, store round-trips, retrieval, compression — no network)
+pytest -q
 ```
+
+Unit and API tests run offline: Groq is a fake client and the encoder is a deterministic fake.
+CI installs the full runtime requirements and imports the app before testing.

@@ -12,8 +12,9 @@ OUTPUTS:
 Compressed prompt text, token estimates for original and compressed versions
 """
 
-from typing import Dict
+from openai import OpenAIError
 
+from config import GROQ_MODEL
 
 # System prompt for compression
 COMPRESSION_SYSTEM_PROMPT = """You are a prompt compression system. Make the user's message more concise and precise while preserving all important information. Remove filler, informal language, tangents, and redundancy. Return ONLY the compressed message, nothing else."""
@@ -38,7 +39,7 @@ def _estimate_tokens(text: str) -> int:
     return max(1, estimated_tokens)  # Ensure at least 1 token
 
 
-def compress(prompt: str, groq_client) -> Dict[str, any]:
+def compress(prompt: str, groq_client) -> dict[str, any]:
     """
     Compress a prompt to be more concise and precise.
 
@@ -68,7 +69,7 @@ def compress(prompt: str, groq_client) -> Dict[str, any]:
     # Call Groq API for compression
     try:
         response = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model=GROQ_MODEL,
             messages=[
                 {
                     "role": "system",
@@ -82,8 +83,8 @@ def compress(prompt: str, groq_client) -> Dict[str, any]:
             temperature=0.3,  # Lower temperature for consistency
             max_tokens=2048  # Allow room for compressed output
         )
-    except Exception as e:
-        # If compression fails, return original with error indication
+    except OpenAIError as e:
+        # If compression fails, return the original prompt unchanged
         print(f"Error calling Groq API for compression: {e}")
         return {
             "compressed": prompt,

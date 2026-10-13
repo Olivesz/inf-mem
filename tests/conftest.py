@@ -17,7 +17,7 @@ sys.path.insert(0, str(BACKEND))
 
 try:  # pragma: no cover - environment dependent
     import fastembed  # noqa: F401
-except Exception:  # fastembed not installed -> inject a lightweight stub
+except ImportError:  # fastembed not installed -> inject a lightweight stub
     stub = types.ModuleType("fastembed")
 
     class TextEmbedding:  # minimal placeholder; real embedding is monkeypatched

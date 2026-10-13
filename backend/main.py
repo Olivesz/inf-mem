@@ -2,296 +2,187 @@
 FastAPI server for the inf-mem personal LLM memory system.
 
 PURPOSE:
-Expose the memory system via REST API with CORS support for browser extensions.
-Handle memory extraction, retrieval, compression, and management.
+Expose memory retrieval, extraction, compression and management over REST
+to the Chrome extension. Only the extension's origin may call it.
 
 INPUTS:
-HTTP requests with JSON payloads from browser extension or clients
+HTTP requests with JSON payloads from the browser extension
 
 OUTPUTS:
 JSON responses with memory data, extraction results, compression results
 """
 
-from pathlib import Path
-from typing import Optional
+import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 
 import compressor
+import config
 import extractor
 import retriever
 from memory_store import MemoryStore
 from models import CompressRequest, ExtractRequest, RetrieveRequest
 
+store: MemoryStore | None = None
+groq_client: OpenAI | None = None
 
-# Global instances
+# Chrome extension IDs are 32 characters from a-p. Any web page calling the
+# backend arrives with an http(s) origin and gets no CORS grant, so it cannot
+# read or delete the memory store.
+EXTENSION_ORIGIN = r"^chrome-extension://[a-p]{32}$"
+
+# GET /health checks Groq for real at most this often.
+REACHABILITY_TTL_S = 300.0
+_reachability = {"checked_at": 0.0, "ok": False, "error": None}
+
+
+def make_groq_client(api_key: str | None) -> OpenAI | None:
+    """Build a Groq client, or None when no usable key is configured."""
+    if api_key is None:
+        return None
+    return OpenAI(api_key=api_key, base_url=config.GROQ_BASE_URL)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global store, groq_client
+    store = MemoryStore()
+    print(f"Initialized MemoryStore at {store.data_dir}")
+    groq_client = make_groq_client(config.load_groq_api_key())
+    if groq_client is None:
+        print("Groq key not configured: /extract and /compress will return 503")
+    yield
+
+
 app = FastAPI(
     title="inf-mem API",
     description="Personal LLM memory system",
-    version="1.0.0"
+    version="0.2.0",
+    lifespan=lifespan,
 )
-store: Optional[MemoryStore] = None
-groq_client: Optional[OpenAI] = None
 
-
-# Configure CORS
-# Allow localhost and chrome-extension:// origins for browser extension compatibility
 app.add_middleware(
     CORSMiddleware,
-    # Allow all origins — this backend is local-only (127.0.0.1),
-    # so there's no meaningful security boundary to enforce here.
-    # Chrome extensions require their origin (chrome-extension://...) to be allowed.
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origin_regex=EXTENSION_ORIGIN,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type"],
 )
 
 
-@app.on_event("startup")
-def startup_event() -> None:
-    """
-    Initialize application on startup.
+def _require_store() -> MemoryStore:
+    if store is None:
+        raise HTTPException(status_code=500, detail="MemoryStore not initialized")
+    return store
 
-    Loads Groq API configuration, initializes MemoryStore, and sets up client.
-    """
-    global store, groq_client
 
+def _require_groq():
+    if groq_client is None:
+        raise HTTPException(status_code=503, detail="Groq API key not configured")
+    return groq_client
+
+
+def _groq_reachable() -> tuple:
+    """Make a real, cheap Groq call (list models), cached for REACHABILITY_TTL_S."""
+    if groq_client is None:
+        return False, "not configured"
+    now = time.monotonic()
+    if _reachability["checked_at"] and now - _reachability["checked_at"] < REACHABILITY_TTL_S:
+        return _reachability["ok"], _reachability["error"]
     try:
-        # Initialize memory store
-        store = MemoryStore()
-        print(f"Initialized MemoryStore at {store.data_dir}")
-
-        # Initialize Groq client
-        try:
-            api_key = extractor._load_groq_api_key()
-            groq_client = OpenAI(
-                api_key=api_key,
-                base_url="https://api.groq.com/openai/v1"
-            )
-            print("Groq client initialized successfully")
-        except (FileNotFoundError, ValueError) as e:
-            print(f"Warning: Could not initialize Groq client: {e}")
-            groq_client = None
-
-    except Exception as e:
-        print(f"Error during startup: {e}")
-        raise
+        groq_client.models.list()
+        ok, error = True, None
+    except OpenAIError as e:
+        ok, error = False, type(e).__name__
+    _reachability.update(checked_at=now, ok=ok, error=error)
+    return ok, error
 
 
 @app.get("/health")
-async def health_check() -> dict:
+def health_check() -> dict:
     """
-    Health check endpoint.
-
-    Returns basic system status including memory count and Groq connectivity.
-
-    Returns:
-        Dictionary with keys:
-        - status (str): "ok"
-        - memory_count (int): Total memories in storage
-        - groq_connected (bool): Whether Groq API is available
+    Report store size, whether a Groq key is configured, whether Groq
+    actually answers, and extraction failure counters.
     """
-    if store is None:
-        raise HTTPException(status_code=500, detail="MemoryStore not initialized")
-
-    # Count total memories
-    # Get all unique memory IDs across all users
-    all_memories = set(store.memory_ids)
-    memory_count = len(all_memories)
-
-    # Check if Groq client is available
-    groq_connected = groq_client is not None
-
+    s = _require_store()
+    reachable, error = _groq_reachable()
     return {
         "status": "ok",
-        "memory_count": memory_count,
-        "groq_connected": groq_connected
+        "memory_count": len(s.memory_ids),
+        "groq_configured": groq_client is not None,
+        "groq_reachable": reachable,
+        "groq_error": error,
+        "extraction": dict(extractor.stats),
     }
 
 
 @app.post("/retrieve")
-async def retrieve_memories(request: RetrieveRequest) -> dict:
-    """
-    Retrieve relevant memories for a prompt.
-
-    Uses embedding-based similarity search to find the most relevant stored memories.
-
-    Args:
-        request: RetrieveRequest with prompt, limit, user_id, threshold
-
-    Returns:
-        Dictionary with keys:
-        - memories (list): List of Memory objects, sorted by relevance
-        - count (int): Number of memories returned
-    """
-    if store is None:
-        raise HTTPException(status_code=500, detail="MemoryStore not initialized")
-
-    try:
-        # Load retriever model on first use
-        _ = retriever._get_model()
-
-        # Retrieve relevant memories
-        memories = retriever.retrieve(
-            prompt=request.prompt,
-            store=store,
-            user_id=request.user_id,
-            limit=request.limit,
-            threshold=request.threshold
-        )
-
-        return {
-            "memories": [mem.model_dump() for mem in memories],
-            "count": len(memories)
-        }
-
-    except Exception as e:
-        print(f"Error retrieving memories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+def retrieve_memories(request: RetrieveRequest) -> dict:
+    """Return the user's memories relevant to a prompt, best first."""
+    s = _require_store()
+    memories = retriever.retrieve(
+        prompt=request.prompt,
+        store=s,
+        user_id=request.user_id,
+        limit=request.limit,
+        threshold=request.threshold,
+    )
+    return {"memories": [m.model_dump(mode="json") for m in memories], "count": len(memories)}
 
 
 @app.post("/extract")
-async def extract_memories(request: ExtractRequest) -> dict:
-    """
-    Extract memories from a prompt/response pair.
-
-    Uses Groq LLM to identify and extract memorable information.
-    Deduplicates against existing memories.
-
-    Args:
-        request: ExtractRequest with prompt, response, user_id
-
-    Returns:
-        Dictionary with keys:
-        - extracted (list): List of Memory objects that were added/updated
-        - count (int): Number of memories extracted
-    """
-    if store is None:
-        raise HTTPException(status_code=500, detail="MemoryStore not initialized")
-
-    if groq_client is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Groq API not configured - cannot extract memories"
-        )
-
+def extract_memories(request: ExtractRequest) -> dict:
+    """Extract memories from a prompt/response pair and store them."""
+    s = _require_store()
+    client = _require_groq()
     try:
-        # Extract memories using Groq
         extracted = extractor.extract(
             prompt=request.prompt,
             response=request.response,
-            store=store,
-            user_id=request.user_id
+            store=s,
+            client=client,
+            user_id=request.user_id,
         )
-
-        return {
-            "extracted": [mem.model_dump() for mem in extracted],
-            "count": len(extracted)
-        }
-
-    except Exception as e:
-        print(f"Error extracting memories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except extractor.ExtractionParseError as e:
+        raise HTTPException(status_code=502, detail=f"unparseable model reply: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=f"Groq call failed: {type(e).__name__}")
+    return {"extracted": [m.model_dump(mode="json") for m in extracted], "count": len(extracted)}
 
 
 @app.post("/compress")
-async def compress_prompt(request: CompressRequest) -> dict:
-    """
-    Compress a prompt to be more concise and precise.
-
-    Args:
-        request: CompressRequest with prompt text
-
-    Returns:
-        Dictionary with keys:
-        - compressed (str): Compressed prompt text
-        - original_tokens (int): Estimated tokens in original
-        - compressed_tokens (int): Estimated tokens in compressed
-        - ratio (float): Compression ratio (compressed / original)
-    """
-    if groq_client is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Groq API not configured - cannot compress"
-        )
-
-    try:
-        result = compressor.compress(request.prompt, groq_client)
-        return result
-
-    except Exception as e:
-        print(f"Error compressing prompt: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+def compress_prompt(request: CompressRequest) -> dict:
+    """Ask Groq to shorten a prompt; returns estimated token counts too."""
+    return compressor.compress(request.prompt, _require_groq())
 
 
 @app.get("/memories")
-async def list_memories(user_id: str = "default") -> dict:
-    """
-    List all memories for a user.
+def list_memories(user_id: str = "default") -> dict:
+    """List all of a user's memories, newest first."""
+    memories = _require_store().get_all(user_id)
+    return {"memories": [m.model_dump(mode="json") for m in memories], "count": len(memories)}
 
-    Args:
-        user_id: User identifier (query parameter)
 
-    Returns:
-        Dictionary with keys:
-        - memories (list): All memories for the user, ordered by creation date
-        - count (int): Number of memories
-    """
-    if store is None:
-        raise HTTPException(status_code=500, detail="MemoryStore not initialized")
-
-    try:
-        memories = store.get_all(user_id)
-        return {
-            "memories": [mem.model_dump() for mem in memories],
-            "count": len(memories)
-        }
-
-    except Exception as e:
-        print(f"Error listing memories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+@app.delete("/memories")
+def clear_memories(user_id: str = "default") -> dict:
+    """Delete every memory belonging to a user."""
+    return {"deleted": _require_store().delete_all(user_id)}
 
 
 @app.delete("/memories/{memory_id}")
-async def delete_memory(memory_id: str) -> dict:
-    """
-    Delete a memory by ID.
-
-    Args:
-        memory_id: ID of memory to delete
-
-    Returns:
-        Dictionary with key:
-        - success (bool): Whether deletion succeeded
-    """
-    if store is None:
-        raise HTTPException(status_code=500, detail="MemoryStore not initialized")
-
-    try:
-        memory = store.get_by_id(memory_id)
-        if memory is None:
-            raise HTTPException(status_code=404, detail="Memory not found")
-
-        store.delete_memory(memory_id)
-        return {"success": True}
-
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        print(f"Error deleting memory: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+def delete_memory(memory_id: str) -> dict:
+    """Delete one memory by ID."""
+    s = _require_store()
+    if s.get_by_id(memory_id) is None:
+        raise HTTPException(status_code=404, detail="Memory not found")
+    s.delete_memory(memory_id)
+    return {"success": True}
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # Run the server on port 7842
-    uvicorn.run(
-        app,
-        host="127.0.0.1",
-        port=7842,
-        log_level="info"
-    )
+    uvicorn.run(app, host="127.0.0.1", port=7842, log_level="info")

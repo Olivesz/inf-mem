@@ -1,5 +1,5 @@
 """
-Embedding-based memory retrieval using sentence-transformers.
+Embedding-based memory retrieval using fastembed (BAAI/bge-small-en-v1.5).
 
 PURPOSE:
 Encode user prompts and memories into 384-dimensional vectors,
@@ -12,19 +12,21 @@ OUTPUTS:
 Ranked list of relevant Memory objects, ordered by similarity and importance
 """
 
-from typing import List, Optional
 
 import numpy as np
 from fastembed import TextEmbedding
 
-from models import Memory
 from memory_store import MemoryStore
-
+from models import Memory
 
 # Global model instance — lazy loaded on first call.
 # Uses fastembed (ONNX-based, no PyTorch required) with BAAI/bge-small-en-v1.5,
-# a 384-dimensional model comparable in quality to all-MiniLM-L6-v2.
-_model: Optional[TextEmbedding] = None
+# a 384-dimensional model.
+_model: TextEmbedding | None = None
+
+# Memories scoring below this cosine similarity to the prompt are not
+# retrieved. See eval/calibration.md.
+RETRIEVE_THRESHOLD = 0.35
 
 
 def _get_model() -> TextEmbedding:
@@ -85,86 +87,71 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return float(similarity)
 
 
+def cosine_scores(query: np.ndarray, matrix: np.ndarray) -> np.ndarray:
+    """
+    Cosine similarity of one vector against every row of a matrix.
+
+    Args:
+        query: Vector of shape (384,)
+        matrix: Array of shape (N, 384)
+
+    Returns:
+        Array of shape (N,); rows or queries with zero norm score 0
+    """
+    if len(matrix) == 0:
+        return np.zeros(0, dtype=np.float32)
+    norms = np.linalg.norm(matrix, axis=1) * np.linalg.norm(query)
+    dots = matrix @ query
+    return np.divide(dots, norms, out=np.zeros_like(dots), where=norms > 0)
+
+
 def retrieve(
     prompt: str,
     store: MemoryStore,
     user_id: str,
     limit: int = 5,
-    threshold: float = 0.35
-) -> List[Memory]:
+    threshold: float | None = None
+) -> list[Memory]:
     """
     Retrieve the most relevant memories for a prompt.
 
     Algorithm:
-    1. Encode the prompt to vector
-    2. Compute cosine similarity against all stored memories
-    3. Filter by threshold to remove low-relevance results
-    4. Score each memory by: similarity_score * (1 + importance/10)
-       This gives importance a 10-30% boost depending on value
-    5. Sort by score descending and return top-k
+    1. Encode the prompt to a vector
+    2. Score it against all of the user's stored vectors in one matrix product
+    3. Drop memories below the similarity threshold
+    4. Rank the rest by similarity * (1 + importance/10), so importance
+       multiplies the score by 1.1 to 2.0
+    5. Return the top `limit`
 
     Args:
         prompt: Query text to find relevant memories
         store: MemoryStore instance with embeddings
         user_id: User identifier to filter by
         limit: Maximum number of memories to return
-        threshold: Minimum similarity score (0-1) to include
+        threshold: Minimum similarity to include; None means RETRIEVE_THRESHOLD
 
     Returns:
         List of Memory objects, ordered by relevance score (highest first)
     """
-    # Get all memory IDs for this user
-    user_memory_ids = store.get_memory_ids(user_id)
-
-    if not user_memory_ids:
+    if threshold is None:
+        threshold = RETRIEVE_THRESHOLD
+    ids, matrix = store.get_user_vectors(user_id)
+    if not ids:
         return []
 
-    # Encode the query prompt
-    prompt_embedding = encode(prompt)
-
-    # Get all embeddings from store
-    all_embeddings = store.get_embeddings()
-
-    if len(all_embeddings) == 0:
+    sims = cosine_scores(encode(prompt), matrix)
+    passing = np.flatnonzero(sims >= threshold)
+    if len(passing) == 0:
         return []
 
-    # Build mapping of memory IDs to their positions in the embeddings array
-    all_ids = store.memory_ids
-    user_id_to_idx = {mid: i for i, mid in enumerate(all_ids) if mid in user_memory_ids}
-
-    # Compute similarities for user's memories
-    similarities = {}
-    for mem_id, idx in user_id_to_idx.items():
-        sim = cosine_similarity(prompt_embedding, all_embeddings[idx])
-        if sim >= threshold:
-            similarities[mem_id] = sim
-
-    if not similarities:
-        return []
-
-    # Fetch memory objects and compute final scores
-    scored_memories = []
-    for mem_id, similarity in similarities.items():
-        memory = store.get_by_id(mem_id)
+    by_id = {m.id: m for m in store.get_many([ids[i] for i in passing])}
+    scored = []
+    for i in passing:
+        memory = by_id.get(ids[i])
         if memory is not None:
-            # Score combines similarity and importance
-            # importance ranges 1-10, so multiplier ranges 1.1-2.0
-            importance_multiplier = 1.0 + (memory.importance / 10.0)
-            final_score = similarity * importance_multiplier
-            scored_memories.append((memory, final_score))
+            scored.append((memory, float(sims[i]) * (1.0 + memory.importance / 10.0)))
+    scored.sort(key=lambda x: x[1], reverse=True)
 
-    # Sort by score descending
-    scored_memories.sort(key=lambda x: x[1], reverse=True)
-
-    # Extract Memory objects and return top-k
-    result = [mem for mem, score in scored_memories[:limit]]
-
-    # Increment access counts for returned memories
-    for memory in result:
-        try:
-            store.increment_access(memory.id)
-        except ValueError:
-            # Memory was deleted between retrieval and access increment; skip
-            pass
-
+    result = [mem for mem, _ in scored[:limit]]
+    store.increment_access_many([m.id for m in result])
     return result

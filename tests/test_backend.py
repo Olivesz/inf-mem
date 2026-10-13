@@ -7,19 +7,18 @@ directory so nothing touches ~/.inf_mem.
 
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
 import numpy as np
 import pytest
+from openai import OpenAIError
 from pydantic import ValidationError
 
 import compressor
 import retriever
-from models import Memory, MemoryType, RetrieveRequest
 from memory_store import MemoryStore
-
+from models import Memory, MemoryType, RetrieveRequest
 
 # --------------------------------------------------------------------------- #
 # Fixtures
@@ -59,7 +58,7 @@ def test_retrieve_request_threshold_bounds():
     with pytest.raises(ValidationError):
         RetrieveRequest(prompt="q", threshold=1.5)
     r = RetrieveRequest(prompt="q")
-    assert r.limit == 5 and 0.0 <= r.threshold <= 1.0
+    assert r.limit == 5 and r.threshold is None
 
 
 def test_memory_type_enum_roundtrip():
@@ -201,7 +200,7 @@ class _FakeGroq:
         self.chat = type("Chat", (), {"completions": _FakeCompletions(content)})()
         if raise_error:
             def _boom(**kwargs):
-                raise RuntimeError("api down")
+                raise OpenAIError("api down")
             self.chat.completions.create = _boom
 
 
