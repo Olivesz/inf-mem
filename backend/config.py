@@ -13,7 +13,9 @@ CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
 # The value shipped in config.example.yaml. A key equal to this is not a key.
 PLACEHOLDER_KEY = "your-groq-api-key-here"
 
-GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+# GROQ_BASE_URL in the environment points the client elsewhere; the E2E tests
+# use it to put a local fake Groq server behind the real HTTP client.
+GROQ_BASE_URL = os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 GROQ_MODEL = "llama-3.1-8b-instant"
 
 
