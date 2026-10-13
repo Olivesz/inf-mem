@@ -12,13 +12,12 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from openai import OpenAIError
 
 import config
 import extractor
 import main
 import retriever
-from fakes import FakeEncoder, FakeGroq
+from fakes import FakeEncoder, GroqHTTP
 
 EXT_ORIGIN = "chrome-extension://" + "abcdefghijklmnopabcdefghijklmnop"
 
@@ -45,9 +44,12 @@ def app_client(tmp_path, monkeypatch, encoder):
 
 @pytest.fixture
 def with_groq(monkeypatch):
-    """Install a fake Groq client; returns it so tests can queue replies."""
-    fake = FakeGroq()
-    monkeypatch.setattr(main, "groq_client", fake)
+    """Install a real OpenAI client with a mocked HTTP transport.
+
+    Returns the GroqHTTP so tests can queue replies and inspect requests.
+    """
+    fake = GroqHTTP()
+    monkeypatch.setattr(main, "groq_client", fake.client)
     return fake
 
 
@@ -106,15 +108,39 @@ def test_health_without_key(app_client):
 
 
 def test_health_reachable_reflects_real_call(app_client, monkeypatch):
-    monkeypatch.setattr(main, "groq_client", FakeGroq())
+    ok = GroqHTTP()
+    monkeypatch.setattr(main, "groq_client", ok.client)
     assert app_client.get("/health").json()["groq_reachable"] is True
+    assert ok.requests == [("GET", "/openai/v1/models", None)]
 
     main._reachability.update(checked_at=0.0)
-    monkeypatch.setattr(main, "groq_client", FakeGroq(raise_error=OpenAIError("down")))
+    monkeypatch.setattr(main, "groq_client", GroqHTTP(status=401).client)
     body = app_client.get("/health").json()
     assert body["groq_configured"] is True
     assert body["groq_reachable"] is False
-    assert body["groq_error"] == "OpenAIError"
+    assert body["groq_error"] == "AuthenticationError"
+
+
+def test_extract_sends_the_extraction_request(app_client, with_groq):
+    with_groq.replies.append("[]")
+    app_client.post("/extract", json={"prompt": "I play cello", "response": "Nice"})
+    method, path, body = with_groq.requests[0]
+    assert (method, path) == ("POST", "/openai/v1/chat/completions")
+    assert body["model"] == "llama-3.1-8b-instant"
+    assert body["messages"][0]["role"] == "system"
+    assert "I play cello" in body["messages"][1]["content"]
+
+
+def test_extract_groq_error_is_502(app_client, monkeypatch):
+    monkeypatch.setattr(main, "groq_client", GroqHTTP(status=500).client)
+    r = app_client.post("/extract", json={"prompt": "x"})
+    assert r.status_code == 502
+
+
+def test_compress_groq_error_returns_prompt_unchanged(app_client, monkeypatch):
+    monkeypatch.setattr(main, "groq_client", GroqHTTP(status=429).client)
+    body = app_client.post("/compress", json={"prompt": "keep me"}).json()
+    assert body["compressed"] == "keep me" and body["ratio"] == 1.0
 
 
 # --------------------------------------------------------------------------- #

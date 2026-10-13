@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 
 import numpy as np
 
@@ -61,3 +62,42 @@ class FakeEncoder:
         seed = int.from_bytes(hashlib.sha256(key.encode()).digest()[:8], "little")
         v = np.random.default_rng(seed).standard_normal(384).astype(np.float32)
         return v / np.linalg.norm(v)
+
+
+class GroqHTTP:
+    """A real OpenAI client whose HTTP transport is mocked.
+
+    Unlike FakeGroq, every request goes through the openai SDK: request
+    building, response parsing and its error types. Queue chat replies in
+    ``replies``; ``status`` makes every call fail with that HTTP status.
+    ``requests`` records (method, path, json body) for each call.
+    """
+
+    def __init__(self, *replies: str, status: int = 200):
+        import httpx
+        from openai import OpenAI
+
+        self.replies = list(replies)
+        self.status = status
+        self.requests: list[tuple] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = json.loads(request.content) if request.content else None
+            self.requests.append((request.method, request.url.path, body))
+            if self.status != 200:
+                return httpx.Response(self.status, json={"error": {"message": "mocked failure"}})
+            if request.url.path.endswith("/models"):
+                return httpx.Response(200, json={"object": "list", "data": [
+                    {"id": "llama-3.1-8b-instant", "object": "model", "created": 0, "owned_by": "groq"}]})
+            content = self.replies.pop(0) if self.replies else "[]"
+            return httpx.Response(200, json={
+                "id": "chatcmpl-test", "object": "chat.completion", "created": 0,
+                "model": body["model"],
+                "choices": [{"index": 0, "finish_reason": "stop",
+                             "message": {"role": "assistant", "content": content}}],
+                "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+            })
+
+        self.client = OpenAI(api_key="test-key", base_url="https://api.groq.com/openai/v1",
+                             http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+                             max_retries=0)
