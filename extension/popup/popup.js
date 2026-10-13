@@ -73,30 +73,26 @@ async function updateHealthStatus() {
 
 /**
  * Load and render all stored memories
- * @description Fetches memories from background, groups by type, renders cards
+ * @description Fetches the user's memories from the backend via the background worker
  * @returns {Promise<void>}
  */
 async function loadAndRenderMemories() {
-  try {
-    // Get settings which might include memory list
-    const settings = await sendToBackgroundPopup('GET_SETTINGS', {});
-    const memories = settings.memories || [];
-
-    // Update memory count
-    document.getElementById('memoryCount').textContent = memories.length;
-
-    // Update last updated time
-    if (memories.length > 0) {
-      const lastUpdated = memories[0].timestamp || new Date().toLocaleDateString();
-      document.getElementById('lastUpdated').textContent = formatDate(lastUpdated);
-    }
-
-    // Render memory cards
-    renderMemories(memories);
-  } catch (error) {
-    console.error('[inf-mem-popup] Load memories error:', error);
-    renderMemories([]);
+  const response = await sendToBackgroundPopup('GET_MEMORIES', {});
+  const memories = response.memories || [];
+  if (response.error) {
+    updateFooterMessage(response.error);
   }
+
+  document.getElementById('memoryCount').textContent = memories.length;
+
+  const latest = memories
+    .map((m) => m.updated_at || m.created_at)
+    .filter(Boolean)
+    .sort()
+    .pop();
+  document.getElementById('lastUpdated').textContent = latest ? formatDate(latest) : '—';
+
+  renderMemories(memories);
 }
 
 /**
@@ -239,35 +235,28 @@ async function saveCompressionSetting(enabled) {
 /**
  * Delete a single memory
  * @param {string} memoryId - ID of memory to delete
- * @description Sends delete request to backend, updates UI
+ * @description Deletes it on the backend, then re-renders from the backend
  * @returns {Promise<void>}
  */
 async function deleteMemory(memoryId) {
-  try {
-    console.log('[inf-mem-popup] Deleting memory:', memoryId);
-    // Note: This would require a DELETE endpoint on the backend
-    // For now, we'll just remove from UI
-    loadAndRenderMemories();
-  } catch (error) {
-    console.error('[inf-mem-popup] Delete error:', error);
+  const response = await sendToBackgroundPopup('DELETE_MEMORY', { id: memoryId });
+  if (!response.success) {
+    updateFooterMessage(`Delete failed: ${response.error || 'unknown error'}`);
   }
+  await loadAndRenderMemories();
 }
 
 /**
- * Clear all memories with confirmation
- * @description Clears all stored memories (user must confirm first)
+ * Clear all memories (the user has already confirmed)
+ * @description Deletes every memory for this user on the backend, then re-renders
  * @returns {Promise<void>}
  */
 async function clearAllMemories() {
-  try {
-    console.log('[inf-mem-popup] Clearing all memories');
-    // Would need a CLEAR_ALL endpoint or manually delete each
-    // For now, update UI to show empty state
-    await loadAndRenderMemories();
-    updateFooterMessage('Memories cleared');
-  } catch (error) {
-    console.error('[inf-mem-popup] Clear all error:', error);
-  }
+  const response = await sendToBackgroundPopup('CLEAR_MEMORIES', {});
+  updateFooterMessage(
+    response.success ? `Cleared ${response.deleted} memories` : `Clear failed: ${response.error || 'unknown error'}`
+  );
+  await loadAndRenderMemories();
 }
 
 /**

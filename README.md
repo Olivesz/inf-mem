@@ -220,6 +220,7 @@ make test
 | Unit + API | `make test` | Every endpoint through FastAPI's TestClient, CORS, the store, the extractor; Groq and the encoder are fakes |
 | Real model | `make test-model` | The calibrated gates with the real embedding model on fixed probe cases |
 | Eval check | `make eval-check` | Recomputes the LoCoMo calibration and compares with `eval/results/` |
+| Extension E2E | `make test-e2e` | The unpacked extension in Chromium against a real backend process: the popup lists, deletes and clears memories |
 | Latency | `make bench` | `/retrieve` and `/extract` at 100, 1k and 10k memories |
 
-CI runs all four on every push.
+CI runs all five on every push.

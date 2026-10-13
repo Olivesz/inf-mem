@@ -14,6 +14,7 @@
 #   make install    — create .venv and install dependencies into it
 #   make test       — lint, unit and API tests (offline)
 #   make test-model — tests that load the real embedding model
+#   make test-e2e   — the extension in Chromium against a real backend
 #   make calibrate  — recompute the gate calibration files in eval/results/
 #   make eval-check — recompute them and compare with the committed files
 #   make bench      — latency at 100, 1k and 10k memories
@@ -32,7 +33,7 @@ BACKEND_DIR := backend
 PORT        := 7842
 PID_FILE    := .backend.pid
 
-.PHONY: install test test-model calibrate eval-check bench start dev stop status memories clear clean help
+.PHONY: install test test-e2e test-model calibrate eval-check bench start dev stop status memories clear clean help
 
 # ------------------------------------------------------------
 # install: install all Python dependencies
@@ -44,6 +45,10 @@ install:
 test:
 	$(VENV)/bin/ruff check .
 	$(PYTHON) -m pytest -q --cov=backend --cov-fail-under=85
+
+test-e2e:
+	PLAYWRIGHT_BROWSERS_PATH=0 $(PYTHON) -m playwright install chromium
+	PLAYWRIGHT_BROWSERS_PATH=0 $(PYTHON) -m pytest -q -m e2e
 
 test-model:
 	$(PYTHON) -m pytest -q -m model tests/test_real_embedding.py
@@ -138,6 +143,7 @@ help:
 	@echo "  make install    create .venv and install dependencies"
 	@echo "  make test       lint, unit and API tests (offline)"
 	@echo "  make test-model tests with the real embedding model"
+	@echo "  make test-e2e   extension E2E in Chromium"
 	@echo "  make calibrate  recompute eval/results/ calibration files"
 	@echo "  make eval-check recompute and compare with committed results"
 	@echo "  make bench      latency at 100, 1k and 10k memories"

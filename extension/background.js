@@ -6,8 +6,10 @@
  * - Manages chrome.storage for settings and state
  * - Provides abstraction for content scripts to access localhost API
  *   (content scripts cannot directly call localhost due to CSP)
- * - Handles all RETRIEVE, EXTRACT, COMPRESS operations
- * - Default settings: { compressionEnabled: false, userId: "default", backendUrl: "http://localhost:7842" }
+ * - Handles RETRIEVE, EXTRACT, COMPRESS and the popup's memory list,
+ *   delete and clear-all
+ * - Default settings: { compressionEnabled: false, userId: "default", backendUrl: "http://localhost:7842" },
+ *   merged in on every read by getSettings(), never written over stored values
  */
 
 const DEFAULT_SETTINGS = {
@@ -15,17 +17,6 @@ const DEFAULT_SETTINGS = {
   userId: 'default',
   backendUrl: 'http://localhost:7842'
 };
-
-/**
- * Initialize extension on first install/update
- */
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.sync.get(null, (stored) => {
-    if (!stored.backendUrl) {
-      chrome.storage.sync.set(DEFAULT_SETTINGS);
-    }
-  });
-});
 
 /**
  * Message router - handles all communication from content scripts
@@ -53,6 +44,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           break;
         case 'HEALTH_CHECK':
           await handleHealthCheck(sendResponse);
+          break;
+        case 'GET_MEMORIES':
+          await handleGetMemories(sendResponse);
+          break;
+        case 'DELETE_MEMORY':
+          await handleDeleteMemory(data, sendResponse);
+          break;
+        case 'CLEAR_MEMORIES':
+          await handleClearMemories(sendResponse);
           break;
         default:
           sendResponse({ error: `Unknown message type: ${type}` });
@@ -183,23 +183,94 @@ async function handleSaveSettings(data, sendResponse) {
 }
 
 /**
- * Check if backend is accessible
+ * Check the backend and report what /health says
  * @param {Function} sendResponse - callback to send response back
- * @description Makes a HEAD request to backend /health endpoint
- * @returns {Promise<void>} sends {online: boolean} to caller
+ * @returns {Promise<void>} sends {online, memoryCount, groqReachable} to caller
  */
 async function handleHealthCheck(sendResponse) {
   const settings = await getSettings();
 
   try {
-    const response = await fetch(`${settings.backendUrl}/health`, {
-      method: 'GET',
-      mode: 'no-cors'
+    const response = await fetch(`${settings.backendUrl}/health`);
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
+    const health = await response.json();
+    sendResponse({
+      online: true,
+      memoryCount: health.memory_count,
+      groqReachable: health.groq_reachable
     });
-    sendResponse({ online: response.ok || response.status === 0 });
   } catch (error) {
     console.error('Health check error:', error);
     sendResponse({ online: false });
+  }
+}
+
+/**
+ * List the user's memories from the backend, newest first
+ * @param {Function} sendResponse - callback to send response back
+ * @returns {Promise<void>} sends {memories: Array, error?: string} to caller
+ */
+async function handleGetMemories(sendResponse) {
+  const settings = await getSettings();
+  const url = `${settings.backendUrl}/memories?user_id=${encodeURIComponent(settings.userId)}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
+    const result = await response.json();
+    sendResponse({ memories: result.memories || [] });
+  } catch (error) {
+    console.error('GET_MEMORIES error:', error);
+    sendResponse({ error: 'Backend offline. Start with: make start', memories: [] });
+  }
+}
+
+/**
+ * Delete one memory on the backend
+ * @param {Object} data - { id: string }
+ * @param {Function} sendResponse - callback to send response back
+ * @returns {Promise<void>} sends {success: boolean, error?: string} to caller
+ */
+async function handleDeleteMemory(data, sendResponse) {
+  const settings = await getSettings();
+
+  try {
+    const response = await fetch(`${settings.backendUrl}/memories/${encodeURIComponent(data.id)}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
+    sendResponse({ success: true });
+  } catch (error) {
+    console.error('DELETE_MEMORY error:', error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Delete all of the current user's memories on the backend
+ * @param {Function} sendResponse - callback to send response back
+ * @returns {Promise<void>} sends {success: boolean, deleted?: number, error?: string} to caller
+ */
+async function handleClearMemories(sendResponse) {
+  const settings = await getSettings();
+  const url = `${settings.backendUrl}/memories?user_id=${encodeURIComponent(settings.userId)}`;
+
+  try {
+    const response = await fetch(url, { method: 'DELETE' });
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`);
+    }
+    const result = await response.json();
+    sendResponse({ success: true, deleted: result.deleted });
+  } catch (error) {
+    console.error('CLEAR_MEMORIES error:', error);
+    sendResponse({ success: false, error: error.message });
   }
 }
 
