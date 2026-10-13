@@ -1,0 +1,53 @@
+{
+  "machine": {
+    "cpu": "Apple M5",
+    "os": "Darwin 25.6.0",
+    "arch": "arm64",
+    "python": "3.12.13",
+    "cpu_count": 10,
+    "load_avg_1m_at_start": 16.91
+  },
+  "date": "2026-10-13",
+  "method": "TestClient, real model and store; 200 /retrieve and 50 /extract per size after 10 warm-up calls; Groq stubbed with a fixed 2-fact reply",
+  "results": [
+    {
+      "memories": 100,
+      "retrieve": {
+        "p50_ms": 15.47,
+        "p95_ms": 38.07,
+        "n": 200
+      },
+      "extract": {
+        "p50_ms": 26.83,
+        "p95_ms": 57.77,
+        "n": 50
+      }
+    },
+    {
+      "memories": 1000,
+      "retrieve": {
+        "p50_ms": 19.23,
+        "p95_ms": 47.61,
+        "n": 200
+      },
+      "extract": {
+        "p50_ms": 27.92,
+        "p95_ms": 98.62,
+        "n": 50
+      }
+    },
+    {
+      "memories": 10000,
+      "retrieve": {
+        "p50_ms": 44.51,
+        "p95_ms": 84.0,
+        "n": 200
+      },
+      "extract": {
+        "p50_ms": 90.48,
+        "p95_ms": 150.34,
+        "n": 50
+      }
+    }
+  ]
+}

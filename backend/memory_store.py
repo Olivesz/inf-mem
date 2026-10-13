@@ -32,15 +32,14 @@ class MemoryStore:
     - memory_ids.npy: the memory ID of each embedding row, in row order
     """
 
-    def __init__(self) -> None:
+    def __init__(self, data_dir: Path | None = None) -> None:
         """
         Initialize storage directories and database.
 
-        Creates ~/.inf_mem directory if needed, initializes SQLite schema,
-        and loads or creates the embeddings numpy array.
+        Creates the data directory (default ~/.inf_mem) if needed, initializes
+        the SQLite schema, and loads or creates the embeddings array.
         """
-        # Create storage directory
-        self.data_dir = Path.home() / ".inf_mem"
+        self.data_dir = Path(data_dir) if data_dir else Path.home() / ".inf_mem"
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.db_path = self.data_dir / "memories.db"
@@ -133,6 +132,29 @@ class MemoryStore:
         self.memory_ids.append(memory.id)
 
         # Save updated arrays
+        self._save_embeddings()
+
+    def add_many(self, memories: list[Memory], embeddings: np.ndarray) -> None:
+        """
+        Add many memories with one SQLite transaction and one file write.
+
+        Args:
+            memories: Memory objects, in the same order as the embedding rows
+            embeddings: Array of shape (len(memories), 384)
+        """
+        if embeddings.shape != (len(memories), 384):
+            raise ValueError(f"Embeddings must have shape ({len(memories)}, 384), got {embeddings.shape}")
+        conn = sqlite3.connect(self.db_path)
+        conn.executemany("""
+            INSERT INTO memories
+            (id, user_id, text, type, keywords, importance, created_at, updated_at, access_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [(m.id, m.user_id, m.text, m.type.value, json.dumps(m.keywords), m.importance,
+               m.created_at.isoformat(), m.updated_at.isoformat(), m.access_count) for m in memories])
+        conn.commit()
+        conn.close()
+        self.embeddings = np.vstack([self.embeddings, embeddings.astype(np.float32)])
+        self.memory_ids.extend(m.id for m in memories)
         self._save_embeddings()
 
     def update_memory(

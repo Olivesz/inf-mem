@@ -27,3 +27,6 @@ Thumbs.db
 # fastembed model cache
 .cache/
 .coverage
+eval/data/
+eval/.cache/
+bench/results-local.json

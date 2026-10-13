@@ -42,3 +42,71 @@ jobs:
 
       - name: Unit and API tests, with coverage gate
         run: pytest -q --cov=backend --cov-report=term-missing --cov-fail-under=85
+
+  model:
+    name: real embedding model + eval check
+    runs-on: ubuntu-latest
+    env:
+      FASTEMBED_CACHE_PATH: /home/runner/.cache/fastembed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+
+      - name: Cache the embedding model
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+
+      - name: Cache the LoCoMo download (hash-checked on every run)
+        uses: actions/cache@v4
+        with:
+          path: eval/data
+          key: locomo-79fa87e90f04
+
+      - name: Gate tests with the real model
+        run: pytest -q -m model
+
+      - name: Recompute calibration from scratch and compare with committed results
+        run: |
+          python eval/retrieval.py --check
+          python eval/dedupe.py --check
+
+  bench:
+    name: latency bench (1k memories)
+    runs-on: ubuntu-latest
+    env:
+      FASTEMBED_CACHE_PATH: /home/runner/.cache/fastembed
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+      - uses: actions/cache@v4
+        with:
+          path: eval/data
+          key: locomo-79fa87e90f04
+
+      - name: Bench, and compare with the committed CI baseline once it exists
+        run: |
+          if [ -f bench/results-ci.json ]; then
+            python bench/bench.py --sizes 1000 --out bench-ci.json --compare bench/results-ci.json
+          else
+            echo "::warning::bench/results-ci.json not committed yet; recording a baseline only"
+            python bench/bench.py --sizes 100 1000 10000 --out bench-ci.json
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-ci
+          path: bench-ci.json

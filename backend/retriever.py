@@ -24,9 +24,11 @@ from models import Memory
 # a 384-dimensional model.
 _model: TextEmbedding | None = None
 
+QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
+
 # Memories scoring below this cosine similarity to the prompt are not
 # retrieved. See eval/calibration.md.
-RETRIEVE_THRESHOLD = 0.35
+RETRIEVE_THRESHOLD = 0.61
 
 
 def _get_model() -> TextEmbedding:
@@ -59,6 +61,16 @@ def encode(text: str) -> np.ndarray:
     # fastembed.embed() returns a generator — take the first (and only) result
     embedding = next(model.embed([text]))
     return np.array(embedding, dtype=np.float32)
+
+
+def encode_query(text: str) -> np.ndarray:
+    """
+    Encode a prompt for searching stored memories.
+
+    bge models are trained with this instruction on the query side only;
+    memories are encoded without it. eval/retrieval.py measures the gain.
+    """
+    return encode(QUERY_INSTRUCTION + text)
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -116,7 +128,7 @@ def retrieve(
     Retrieve the most relevant memories for a prompt.
 
     Algorithm:
-    1. Encode the prompt to a vector
+    1. Encode the prompt with the bge query instruction
     2. Score it against all of the user's stored vectors in one matrix product
     3. Drop memories below the similarity threshold
     4. Rank the rest by similarity * (1 + importance/10), so importance
@@ -139,7 +151,7 @@ def retrieve(
     if not ids:
         return []
 
-    sims = cosine_scores(encode(prompt), matrix)
+    sims = cosine_scores(encode_query(prompt), matrix)
     passing = np.flatnonzero(sims >= threshold)
     if len(passing) == 0:
         return []

@@ -54,6 +54,9 @@ class FakeEncoder:
 
     def __call__(self, text: str) -> np.ndarray:
         self.calls.append(text)
+        # Queries carry the bge instruction; strip it so a query and a memory
+        # with the same text share a vector, as they nearly do for the real model.
+        text = text.removeprefix("Represent this sentence for searching relevant passages: ")
         key = self.aliases.get(text, text)
         seed = int.from_bytes(hashlib.sha256(key.encode()).digest()[:8], "little")
         v = np.random.default_rng(seed).standard_normal(384).astype(np.float32)

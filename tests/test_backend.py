@@ -218,3 +218,13 @@ def test_compress_falls_back_on_api_error():
     out = compressor.compress(prompt, client)
     assert out["compressed"] == prompt
     assert out["ratio"] == 1.0
+
+
+def test_add_many_matches_add_memory(store):
+    mems = [_mem(f"bulk {i}") for i in range(3)]
+    store.add_many(mems, np.stack([_vec(i) for i in range(3)]))
+    assert [m.id for m in store.get_all("u1")] and len(store.get_all("u1")) == 3
+    ids, matrix = store.get_user_vectors("u1")
+    assert set(ids) == {m.id for m in mems} and matrix.shape == (3, 384)
+    with pytest.raises(ValueError):
+        store.add_many(mems, np.zeros((2, 384), dtype=np.float32))

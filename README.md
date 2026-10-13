@@ -35,6 +35,32 @@ Memories are stored and searched on your machine. Groq sees each prompt and repl
 
 ---
 
+## Results
+
+<!-- results:start -->
+**Retrieval** on [LoCoMo](https://github.com/snap-research/locomo): 1,536 questions over 2,541 fact-style memories, real embedding model, no LLM. Method and caveats: [eval/calibration.md](eval/calibration.md).
+
+| Retrieval gate | Recall@5 | Off-topic prompts that still inject memories |
+|---|---|---|
+| none | 0.562 | all of them (no gate) |
+| 0.35 (old, hand-picked) | 0.562 | 100% |
+| **0.61 (calibrated)** | **0.556** | **3.3%** |
+
+**Dedupe** on 180 hand-labelled pairs: at the calibrated 0.945, 91% of merges are true duplicates, but only 4% of duplicates are caught. Cosine similarity alone cannot separate them.
+
+**Latency** through the full HTTP stack, real model and store, Groq stubbed out:
+
+| Machine | Memories | /retrieve p50 / p95 | /extract p50 / p95 |
+|---|---|---|---|
+| Apple M5 | 100 | 15 / 38 ms | 27 / 58 ms |
+| Apple M5 | 1,000 | 19 / 48 ms | 28 / 99 ms |
+| Apple M5 | 10,000 | 45 / 84 ms | 90 / 150 ms |
+<!-- results:end -->
+
+Regenerate with `make calibrate`, `make bench` and `python eval/report.py`. CI recomputes the calibration from scratch and fails if it moves.
+
+---
+
 ## Memory types
 
 | Type | What it stores | Example |
@@ -92,7 +118,7 @@ cp config.example.yaml config.yaml
 ### 3. Install and start backend
 
 ```bash
-make install
+make install  # creates .venv and installs into it
 make start
 make status   # groq_configured and groq_reachable should both be true
 ```
@@ -185,9 +211,15 @@ MIT — see [LICENSE](LICENSE).
 ## Tests
 
 ```bash
-pip install -r requirements-dev.txt
-pytest -q
+make install
+make test
 ```
 
-Unit and API tests run offline: Groq is a fake client and the encoder is a deterministic fake.
-CI installs the full runtime requirements and imports the app before testing.
+| Tier | Command | What it exercises |
+|---|---|---|
+| Unit + API | `make test` | Every endpoint through FastAPI's TestClient, CORS, the store, the extractor; Groq and the encoder are fakes |
+| Real model | `make test-model` | The calibrated gates with the real embedding model on fixed probe cases |
+| Eval check | `make eval-check` | Recomputes the LoCoMo calibration and compares with `eval/results/` |
+| Latency | `make bench` | `/retrieve` and `/extract` at 100, 1k and 10k memories |
+
+CI runs all four on every push.
