@@ -14,12 +14,14 @@
 
   const thread = document.getElementById('thread');
   const composer = () => document.querySelector('[data-fixture="composer"]');
+  const readComposer = (el) => (el.tagName === 'TEXTAREA' ? el.value : el.innerText);
+  const clearComposer = (el) => { if (el.tagName === 'TEXTAREA') el.value = ''; else el.innerHTML = ''; };
   const sendBtn = document.getElementById('send');
 
   function addReply(n, finished) {
     const words = Array.from({ length: CHUNKS }, (_, i) => `r${n}w${i}`);
     let el, body;
-    if (SITE === 'chatgpt') {
+    if (SITE.startsWith('chatgpt')) {
       el = document.createElement('div');
       el.setAttribute('data-message-author-role', 'assistant');
       body = el;
@@ -35,7 +37,10 @@
   }
 
   function setStreaming(on, el) {
-    if (SITE === 'chatgpt') {
+    if (SITE === 'chatgpt-live') {
+      // Live markup: the submit button relabels itself (data-stop-label).
+      sendBtn.setAttribute('aria-label', on ? 'Stop generating' : 'Send message');
+    } else if (SITE === 'chatgpt') {
       sendBtn.hidden = on;
       const stop = document.getElementById('stop');
       if (on && !stop) {
@@ -52,10 +57,11 @@
   }
 
   function submit() {
-    const text = composer().innerText.trim();
+    if (SITE === 'chatgpt-live' && sendBtn.getAttribute('aria-label') !== 'Send message') return;
+    const text = readComposer(composer()).trim();
     if (!text) return;
     window.__submits.push(text);
-    composer().innerHTML = '';
+    clearComposer(composer());
     const user = document.createElement('div');
     user.className = 'user-message';
     user.textContent = text;

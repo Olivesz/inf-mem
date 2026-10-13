@@ -8,7 +8,9 @@ fake HTTP server that records every extraction request.
 
 from __future__ import annotations
 
+import json
 import time
+import urllib.request
 
 import numpy as np
 import pytest
@@ -16,7 +18,8 @@ from harness import FIXTURES, FakeGroq, seed, start_backend
 
 pytestmark = pytest.mark.e2e
 
-URL = {"chatgpt": "https://chatgpt.com/", "claude": "https://claude.ai/"}
+URL = {"chatgpt": "https://chatgpt.com/", "chatgpt-live": "https://chatgpt.com/", "claude": "https://claude.ai/"}
+SITES = ["chatgpt", "chatgpt-live", "claude"]
 COMPOSER = '[data-fixture="composer"]'
 HEADER = "[Memory Context — inf-mem]"
 
@@ -35,6 +38,10 @@ def stack(tmp_path):
     groq = FakeGroq()
     seed(tmp_path, MEMORIES, np.stack([retriever.encode(t) for t, _, _ in MEMORIES]))
     proc, url = start_backend(tmp_path, groq_url=groq.url)
+    # Load the embedding model before the browser starts timing anything.
+    warm = urllib.request.Request(f"{url}/retrieve", data=json.dumps({"prompt": "warm up"}).encode(),
+                                  headers={"Content-Type": "application/json"})
+    urllib.request.urlopen(warm, timeout=120).read()
     yield url, groq
     proc.terminate()
     proc.wait(timeout=10)
@@ -85,14 +92,15 @@ def wait_until(cond, timeout=15.0):
 def wait_reply_done(page) -> str:
     """Text of the newest reply once streaming has finished."""
     wait_until(lambda: page.evaluate(
-        "!document.querySelector('[data-testid=stop-button], [data-is-streaming=true]')"
+        "!document.querySelector('[data-testid=stop-button], [data-is-streaming=true],"
+        " [aria-label=\"Stop generating\"]')"
         " && document.querySelectorAll('[data-message-author-role=assistant], [data-is-streaming]').length > 0"))
     return page.evaluate(
         "(() => { const r = document.querySelectorAll("
         "'[data-message-author-role=assistant], [data-is-streaming]'); return r[r.length-1].innerText.trim(); })()")
 
 
-@pytest.mark.parametrize("site", ["chatgpt", "claude"])
+@pytest.mark.parametrize("site", SITES)
 def test_send_with_memory_submits_exactly_once(open_site, site):
     open_, _ = open_site
     page = open_(site)
@@ -115,7 +123,7 @@ def test_send_with_memory_submits_exactly_once(open_site, site):
     assert page.locator(".inf-mem-panel").count() == 0
 
 
-@pytest.mark.parametrize("site", ["chatgpt", "claude"])
+@pytest.mark.parametrize("site", SITES)
 def test_extracts_once_per_streamed_reply_with_full_text(open_site, site):
     open_, groq = open_site
     page = open_(site)
@@ -132,7 +140,7 @@ def test_extracts_once_per_streamed_reply_with_full_text(open_site, site):
     assert len(reply.split()) == 40
 
 
-@pytest.mark.parametrize("site", ["chatgpt", "claude"])
+@pytest.mark.parametrize("site", SITES)
 def test_second_prompt_pairs_with_second_reply(open_site, site):
     open_, groq = open_site
     page = open_(site)
@@ -163,7 +171,7 @@ def test_claude_extracts_the_new_reply_not_the_first(open_site):
     assert groq.user_messages()[0].endswith(reply)
 
 
-@pytest.mark.parametrize("site", ["chatgpt", "claude"])
+@pytest.mark.parametrize("site", SITES)
 def test_interception_survives_composer_swap(open_site, site):
     open_, _ = open_site
     page = open_(site)

@@ -141,16 +141,30 @@ function hidePanel(panel) {
 }
 
 /**
- * Set text in a contenteditable composer so the site's editor sees it
+ * Read the composer's current text (a textarea or a contenteditable)
  * @param {HTMLElement} el - The composer
+ * @returns {string} Its text
+ */
+function composerText(el) {
+  return el.tagName === 'TEXTAREA' ? el.value : el.innerText;
+}
+
+/**
+ * Replace the composer's text so the site's editor sees the change
+ * @param {HTMLElement} el - The composer (textarea or contenteditable)
  * @param {string} text - Text to set
  * @returns {void}
  */
 function setComposerText(el, text) {
   el.focus();
-  document.execCommand('selectAll', false, null);
+  if (el.tagName === 'TEXTAREA') {
+    el.select();
+  } else {
+    document.execCommand('selectAll', false, null);
+  }
+  // insertText goes through the browser's editing path, so framework
+  // listeners see a normal input event.
   document.execCommand('insertText', false, text);
-  el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 /**
@@ -226,7 +240,7 @@ function startInfMem(site) {
   function takePrompt(e) {
     if (!e.isTrusted || busy) return null;
     const el = composer();
-    const prompt = el?.innerText?.trim();
+    const prompt = el && composerText(el).trim();
     if (!prompt) return null;
     e.preventDefault();
     e.stopImmediatePropagation();

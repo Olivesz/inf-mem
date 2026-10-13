@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  Fixture for content/chatgpt.js, served at https://chatgpt.com/ by the E2E tests.
+  Composer and send button: captured from the live site 2026-10-13 (logged out,
+  1280px wide), attributes the selectors use kept verbatim, generated class
+  names and tracking attributes dropped. See docs/live-checks/2026-10-13-chatgpt.json.
+  Reply markup: NOT captured (that needs a submitted prompt); it reuses
+  data-message-author-role="assistant" from the earlier layout.
+-->
+<html><head><meta charset="utf-8"><title>chatgpt live-capture fixture</title></head>
+<body data-site="chatgpt-live">
+  <main id="thread"></main>
+  <form onsubmit="return false">
+    <div><div>
+      <textarea aria-label="Chat with ChatGPT" data-mobile-composer-prompt="" enterkeyhint="enter"
+        id="mobile-composer-prompt" name="prompt" placeholder="Ask ChatGPT" required="" rows="1"
+        data-fixture="composer"></textarea>
+    </div></div>
+    <button id="send" aria-label="Send message" data-composer-submit="" data-send-label="Send message"
+      data-stop-label="Stop generating" type="submit">Send</button>
+  </form>
+  <script src="/fixture.js"></script>
+</body></html>

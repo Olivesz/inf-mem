@@ -1,0 +1,14 @@
+{
+  "site": "https://chatgpt.com/",
+  "date": "2026-10-13",
+  "session": "logged out, desktop viewport 1280x900, no prompt submitted",
+  "found": {
+    "composer": "textarea#mobile-composer-prompt[name=\"prompt\"][aria-label=\"Chat with ChatGPT\"]",
+    "send_button": "button[data-composer-submit][aria-label=\"Send message\"][data-stop-label=\"Stop generating\"][type=\"submit\"], inside the composer's form"
+  },
+  "selectors_shipped_before_this_check": {
+    "composer": "div[contenteditable=\"true\"][data-id], div.ProseMirror, div[role=\"textbox\"]: no match",
+    "send_button": "button[data-testid=\"send-button\"], button[aria-label*=\"Send\"]: aria-label match only"
+  },
+  "not_checked": "assistant reply markup and the streaming signal while a reply is written (needs a submitted prompt); claude.ai (needs a login)"
+}
