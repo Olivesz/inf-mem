@@ -41,7 +41,7 @@ class MemoryStore:
         """
         Open (or create) the store in data_dir, default ~/.inf_mem.
 
-        Stores written by older versions, with vectors in embeddings.npy and
+        Stores from older versions, with vectors in embeddings.npy and
         memory_ids.npy, are migrated into the database once; the .npy files
         are then renamed with a .migrated suffix, not deleted.
         """

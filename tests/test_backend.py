@@ -259,7 +259,7 @@ def test_rows_stay_aligned_after_delete_update_and_reopen(store, tmp_path):
 
 
 def test_old_npy_store_is_migrated(tmp_path):
-    """A store written by the .npy version opens with its vectors intact."""
+    """A store in the old .npy layout opens with its vectors intact."""
     import sqlite3
 
     data = tmp_path / ".inf_mem"
